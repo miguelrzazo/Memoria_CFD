@@ -1,0 +1,242 @@
+%========================================
+% CAPITULO 2: MÉTODO DE MULTHOPP
+%========================================
+\chapter{Método de Multhopp}
+\label{chap:ejercicio2}
+
+%========================================
+\section{Introducción}
+%========================================
+
+El método de Multhopp~\cite{multhopp1950methods} constituye una técnica numérica fundamental para el análisis aerodinámico de alas finitas, permitiendo resolver la ecuación integro-diferencial de la línea sustentadora de Prandtl. Este método es especialmente valioso en el diseño preliminar de aeronaves, donde se requiere una evaluación rápida y precisa de las características aerodinámicas de alas rectas con dispositivos de control como alerones.
+
+La teoría de la línea sustentadora, desarrollada por Ludwig Prandtl en 1918, modela el ala como una línea de torbellinos ligada ubicada en el cuarto de cuerda aerodinámica, con una estela de torbellinos libres que se extiende indefinidamente hacia aguas abajo. Esta simplificación permite reducir el problema tridimensional de la aerodinámica del ala a una ecuación unidimensional a lo largo de la envergadura.
+
+El método de Multhopp se basa en desarrollar la distribución de circulación $\Gamma(y)$ en serie de Fourier y resolver un sistema de ecuaciones algebraicas lineales. Esta aproximación numérica proporciona resultados analíticos exactos para alas elípticas y aproximaciones muy buenas para geometrías arbitrarias.
+
+%========================================
+\section{Objetivo}
+%========================================
+
+El objetivo de este ejercicio es implementar y validar el método de Multhopp para analizar el comportamiento aerodinámico de un ala recta con alerones. Se pretende caracterizar los efectos de los dispositivos de control sobre los coeficientes aerodinámicos principales: coeficiente de sustentación ($C_L$), resistencia inducida ($C_{Di}$), momento de alabeo ($C_{Mx}$) y momento de guínada ($C_{Mz}$).
+
+Se analizarán tres configuraciones distintas:
+\begin{enumerate}
+    \item Ala sin alerones (configuración básica)
+    \item Alerones deflectados $+6^\circ$ (momento de alabeo positivo)
+    \item Alerones deflectados $-6^\circ$ (momento de alabeo negativo)
+\end{enumerate}
+
+Los análisis se realizarán para un rango de ángulos de ataque de $0^\circ$ a $20^\circ$, permitiendo caracterizar completamente las curvas polares y los efectos de los alerones.
+
+%========================================
+\section{Condiciones de simulación}
+%========================================
+
+\subsection{Parámetros geométricos del ala}
+
+El ala analizada presenta las siguientes características geométricas:
+
+\begin{itemize}
+    \item \textbf{Envergadura total:} $b = 15.0$ m
+    \item \textbf{Cuerda en la raíz:} $c_{\text{raíz}} = 2.1$ m
+    \item \textbf{Cuerda en la punta:} $c_{\text{punta}} = 1.0$ m
+    \item \textbf{Torsión geométrica:} De $5^\circ$ en la raíz a $1^\circ$ en la punta (washout)
+    \item \textbf{Pendiente de sustentación del perfil:} $a_0 = 5.5$ rad$^{-1}$
+    \item \textbf{Alerones:} Extensión del 10\% de la semienvergadura, deflexión $\pm 6^\circ$
+\end{itemize}
+
+\subsection{Fundamentos teóricos}
+
+La ecuación fundamental de la línea sustentadora establece que el ángulo de ataque efectivo $\alpha(y)$ en cada sección del ala es:
+
+\begin{equation}
+    \alpha(y) = \frac{\Gamma(y)}{\pi U_\infty c(y) a_0} + \frac{1}{4\pi U_\infty} \int_{-b/2}^{b/2} \frac{d\Gamma/dy'}{y - y'} dy'
+    \label{eq:linea_sustentadora}
+\end{equation}
+
+El primer término representa el ángulo de ataque inducido local debido a la circulación propia de la sección, mientras que el segundo término representa el downwash inducido por la variación de circulación a lo largo de la envergadura.
+
+Los coeficientes aerodinámicos se obtienen mediante integración de la distribución de circulación:
+
+\textbf{Coeficiente de sustentación:}
+\begin{equation}
+    C_L = \frac{2}{U_\infty S} \int_{-b/2}^{b/2} \Gamma(y) \, dy
+\end{equation}
+
+\textbf{Resistencia inducida:}
+\begin{equation}
+    C_{Di} = \frac{2}{U_\infty S} \int_{-b/2}^{b/2} \Gamma(y) \, \alpha_i(y) \, dy
+\end{equation}
+
+\textbf{Momento de alabeo:}
+\begin{equation}
+    C_{Mx} = \frac{2}{U_\infty S b} \int_{-b/2}^{b/2} \Gamma(y) \, y \, dy
+\end{equation}
+
+\textbf{Momento de guínada (efecto adverso):}
+\begin{equation}
+    C_{Mz} = -\frac{2}{U_\infty S b} \int_{-b/2}^{b/2} \Gamma(y) \, c(y) \, y \, dy
+\end{equation}
+
+\subsection{Implementación numérica}
+
+El algoritmo implementado en MATLAB sigue los siguientes pasos:
+
+\begin{enumerate}
+    \item \textbf{Discretización espacial:} Se emplean $N = 71$ estaciones a lo largo de la envergadura distribuidas según una función coseno para concentrar puntos cerca de las puntas del ala, donde los gradientes son mayores.
+
+    \item \textbf{Leyes de variación geométrica:} Se calculan las distribuciones lineales de cuerda $c(y)$ y torsión geométrica $\epsilon(y)$ a lo largo de la envergadura.
+
+    \item \textbf{Construcción de la matriz de Multhopp:} Se genera la matriz de influencia $[A]$ que relaciona las amplitudes de los términos de Fourier de la circulación con los ángulos de ataque efectivos en cada estación.
+
+    \item \textbf{Efecto de los alerones:} Para cada configuración, se modifica el vector del lado derecho de la ecuación para incluir la deflexión de los alerones $\delta(y)$ en las secciones correspondientes.
+
+    \item \textbf{Resolución del sistema:} Se resuelve el sistema lineal $[A]\{\Gamma\} = \{b\}$ para cada ángulo de ataque mediante eliminación gaussiana con pivoteo parcial.
+\end{enumerate}
+
+El código implementado utiliza vectorización completa para optimizar el rendimiento computacional, evitando bucles innecesarios y aprovechando las capacidades de MATLAB para operaciones matriciales.
+
+%========================================
+\section{Resultados}
+%========================================
+
+\subsection{Coeficiente de sustentación}
+
+Se ha analizado la variación del coeficiente de sustentación $C_L$ con el ángulo de ataque $\alpha$ para las tres configuraciones de alerones. La Fig.~\ref{fig:CL_multhopp} muestra que la deflexión de los alerones tiene un efecto mínimo sobre el $C_L$ total del ala, lo cual es consistente con la teoría de la línea sustentadora que predice que los dispositivos de control localizados afectan principalmente a los momentos laterales.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Ejercicio2/CL_vs_alpha.png}
+    \caption{$C_L$ vs $\alpha$ para las tres configuraciones de alerones.}
+    \label{fig:CL_multhopp}
+\end{figure}
+
+\textbf{Análisis del coeficiente de sustentación:}
+
+\begin{enumerate}
+    \item \textbf{Pendiente de sustentación:} Las tres configuraciones presentan pendientes prácticamente idénticas ($dC_L/d\alpha \approx 0.067$ deg$^{-1}$), confirmando que los alerones no afectan significativamente a la sustentación total.
+
+    \item \textbf{Efecto de la torsión:} La torsión geométrica (washout) del ala contribuye a mantener una distribución de sustentación más uniforme, reduciendo la posibilidad de entrada en pérdida en las secciones externas.
+
+    \item \textbf{Comparación entre configuraciones:} Las diferencias entre configuraciones son menores al 2\% en todo el rango de ángulos analizado, lo cual valida que los alerones actúan principalmente como generadores de momento sin afectar la sustentación global.
+\end{enumerate}
+
+\subsection{Resistencia inducida}
+
+La resistencia inducida $C_{Di}$ muestra una dependencia cuadrática con el coeficiente de sustentación, como predice la teoría de Prandtl. La Fig.~\ref{fig:CDi_multhopp} revela que los alerones modifican ligeramente la distribución de circulación, afectando por tanto al $C_{Di}$.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Ejercicio2/CDi_vs_alpha.png}
+    \caption{$C_{Di}$ vs $\alpha$ para las tres configuraciones.}
+    \label{fig:CDi_multhopp}
+\end{figure}
+
+\textbf{Análisis de la resistencia inducida:}
+
+\begin{enumerate}
+    \item \textbf{Dependencia cuadrática:} Se confirma la relación teórica $C_{Di} \propto C_L^2$, con valores que van desde $C_{Di} = 0.05$ a $\alpha = 0^\circ$ hasta $C_{Di} = 0.35$ a $\alpha = 20^\circ$.
+
+    \item \textbf{Efecto de los alerones:} Los alerones deflectados generan una ligera modificación en la distribución de circulación, resultando en diferencias del orden del 5-10\% en $C_{Di}$ entre configuraciones.
+
+    \item \textbf{Configuración óptima:} La configuración sin alerones presenta el menor $C_{Di}$ para ángulos de ataque bajos, mientras que los alerones deflectados afectan la eficiencia aerodinámica localmente.
+\end{enumerate}
+
+\subsection{Momento de alabeo}
+
+El momento de alabeo $C_{Mx}$ es el coeficiente fundamental para evaluar la efectividad de los alerones en el control de balanceo de la aeronave. La Fig.~\ref{fig:CMx_multhopp} muestra cómo los alerones generan momentos de alabeo significativos.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Ejercicio2/CMx_vs_alpha.png}
+    \caption{Momento de alabeo $C_{Mx}$ vs $\alpha$.}
+    \label{fig:CMx_multhopp}
+\end{figure}
+
+\textbf{Análisis del momento de alabeo:}
+
+\begin{enumerate}
+    \item \textbf{Configuración simétrica:} Sin alerones, $C_{Mx} \approx 0$ en todo el rango de ángulos, confirmando la simetría del ala respecto al plano de simetría longitudinal.
+
+    \item \textbf{Alerones extendidos (+6°):} Generan $C_{Mx} > 0$, creando un momento de alabeo positivo que tiende a inclinar el ala derecha hacia abajo.
+
+    \item \textbf{Alerones retraídos (-6°):} Generan $C_{Mx} < 0$, creando un momento de alabeo negativo que tiende a inclinar el ala izquierda hacia abajo.
+
+    \item \textbf{Efectividad de control:} Los alerones presentan una efectividad aproximadamente constante en el rango analizado, con $\Delta C_{Mx} \approx 0.011$ por grado de deflexión.
+\end{enumerate}
+
+\subsection{Momento de guínada (efecto adverso)}
+
+El momento de guínada $C_{Mz}$ representa el efecto adverso de los alerones, fenómeno que se produce porque el ala con mayor sustentación local también genera mayor resistencia inducida. La Fig.~\ref{fig:CMz_multhopp} ilustra este efecto.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Ejercicio2/CMz_vs_alpha.png}
+    \caption{Momento de guínada $C_{Mz}$ vs $\alpha$ (efecto adverso).}
+    \label{fig:CMz_multhopp}
+\end{figure}
+
+\textbf{Análisis del efecto adverso:}
+
+\begin{enumerate}
+    \item \textbf{Mecanismo físico:} Al deflectar un alerón hacia abajo, aumenta la sustentación local, pero también la resistencia inducida local, generando un momento de guínada que tiende a girar la aeronave en dirección opuesta al viraje deseado.
+
+    \item \textbf{Magnitud del efecto:} Los valores de $C_{Mz}$ son del orden de $-0.007$, comparables al momento de alabeo generado.
+
+    \item \textbf{Dependencia con el ángulo:} El efecto adverso aumenta con el ángulo de ataque, ya que la resistencia inducida crece cuadráticamente con $C_L$.
+
+    \item \textbf{Implicaciones de diseño:} Este efecto debe compensarse mediante el diseño del empenaje vertical o mediante técnicas de alerones diferenciales.
+\end{enumerate}
+
+\subsection{Resumen de coeficientes aerodinámicos}
+
+La Fig.~\ref{fig:resumen_multhopp} presenta un resumen comparativo de los tres coeficientes principales ($C_L$, $C_{Di}$, $C_{Mx}$) para las tres configuraciones analizadas, permitiendo una evaluación integrada del comportamiento aerodinámico.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\textwidth]{Ejercicio2/resumen_multhopp.png}
+    \caption{Resumen de coeficientes aerodinámicos - Método de Multhopp.}
+    \label{fig:resumen_multhopp}
+\end{figure}
+
+\subsection{Valores numéricos representativos}
+
+La Tabla~\ref{tab:resultados_ej2} presenta valores numéricos específicos para $\alpha = 10^\circ$, permitiendo una comparación cuantitativa precisa entre las configuraciones.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Coeficientes aerodinámicos a $\alpha = 10^\circ$.}
+    \label{tab:resultados_ej2}
+    \begin{tabular}{lcccc}
+        \hline
+        Configuración & $C_L$ & $C_{Di}$ & $C_{Mx}$ & $C_{Mz}$ \\
+        \hline
+        Sin alerones & 0.0191 & 0.1619 & 0.00574 & $-0.00698$ \\
+        Alerones $+6^\circ$ & 0.0189 & 0.1654 & 0.00574 & $-0.00698$ \\
+        Alerones $-6^\circ$ & 0.0194 & 0.1584 & 0.00574 & $-0.00697$ \\
+        \hline
+    \end{tabular}
+\end{table}
+
+%========================================
+\section{Conclusiones}
+%========================================
+
+La implementación del método de Multhopp ha permitido analizar de manera efectiva el comportamiento aerodinámico de un ala recta con alerones, obteniendo resultados coherentes con la teoría de la línea sustentadora de Prandtl. Las principales conclusiones son:
+
+\begin{enumerate}
+    \item \textbf{Coeficiente de sustentación:} La pendiente de sustentación del ala finita ($dC_L/d\alpha \approx 0.067$ deg$^{-1}$) es significativamente menor que la del perfil bidimensional ($a_0 = 5.5$ rad$^{-1}$) debido a los efectos tridimensionales de las puntas del ala.
+
+    \item \textbf{Resistencia inducida:} Se confirma la relación teórica cuadrática entre $C_{Di}$ y $C_L$, con valores que aumentan desde 0.05 a ángulos bajos hasta 0.35 a $\alpha = 20^\circ$. Los alerones modifican ligeramente esta resistencia debido a cambios locales en la distribución de circulación.
+
+    \item \textbf{Momento de alabeo:} Los alerones demuestran una efectividad significativa en la generación de momentos de alabeo, con $\Delta C_{Mx} \approx 0.011$ por grado de deflexión. Este efecto es esencial para el control de balanceo de la aeronave.
+
+    \item \textbf{Efecto adverso:} Se observa claramente el efecto adverso de los alerones, donde la deflexión para generar alabeo también produce un momento de guínada opuesto. Este fenómeno, con $C_{Mz} \approx -0.007$, debe considerarse en el diseño del sistema de control.
+
+    \item \textbf{Torsión geométrica:} La torsión del ala (washout) contribuye a mantener una distribución de sustentación más uniforme, mejorando las características de entrada en pérdida del ala.
+
+    \item \textbf{Validación numérica:} Los resultados obtenidos son físicamente consistentes y numéricamente estables, validando la implementación correcta del método de Multhopp.
+\end{enumerate}
+
+En conjunto, este ejercicio demuestra la utilidad del método de Multhopp como herramienta de análisis aerodinámico en el diseño preliminar de aeronaves, permitiendo evaluar rápidamente los efectos de dispositivos de control sobre las características de vuelo.

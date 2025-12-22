@@ -1,0 +1,479 @@
+%========================================
+% CAPITULO 6: CONVERGENCIA DE MALLA - CILINDRO Re=1
+%========================================
+\chapter{Verificación Numérica: Estudio de Convergencia de Malla}
+\label{chap:ejercicio6}
+
+%========================================
+\section{Introducción}
+%========================================
+
+La verificación numérica constituye un paso fundamental en cualquier estudio de dinámica de fluidos computacional. Antes de comparar los resultados de una simulación con datos experimentales (validación), es necesario demostrar que la solución numérica es independiente de la discretización espacial empleada. Este proceso se conoce como \textit{estudio de convergencia de malla} o \textit{grid convergence study}~\cite{roache1997quantification}.
+
+El método de volúmenes finitos, empleado en OpenFOAM, introduce errores de truncamiento que dependen del tamaño de las celdas de la malla. A medida que se refina la malla (celdas más pequeñas), estos errores disminuyen y la solución numérica converge hacia la solución exacta de las ecuaciones discretizadas. Sin embargo, refinar la malla incrementa significativamente el coste computacional, por lo que es esencial encontrar un equilibrio entre precisión y eficiencia.
+
+El \textit{Grid Convergence Index} (GCI), propuesto por Roache~\cite{roache1998verification}, proporciona un método estandarizado para cuantificar la incertidumbre numérica debida a la discretización espacial. Este índice, combinado con la extrapolación de Richardson, permite estimar el valor de una cantidad de interés en una malla hipotéticamente infinita y establecer bandas de incertidumbre para los resultados obtenidos.
+
+En este ejercicio se aplica la metodología GCI al flujo laminar estacionario alrededor de un cilindro circular a número de Reynolds muy bajo ($Re = 1$), donde existe solución analítica de referencia, permitiendo una validación adicional de los resultados.
+
+%========================================
+\section{Objetivo}
+%========================================
+
+El objetivo de este ejercicio es realizar un estudio sistemático de convergencia de malla para cuantificar la incertidumbre numérica en simulaciones CFD. Los objetivos específicos son:
+
+\begin{enumerate}
+    \item Simular el flujo alrededor de un cilindro 2D a $Re = 1$ empleando tres niveles de refinamiento de malla (gruesa, media y fina) con ratio de refinamiento constante.
+
+    \item Calcular el orden de convergencia observado a partir de los coeficientes de arrastre obtenidos en cada malla.
+
+    \item Aplicar la extrapolación de Richardson para estimar el valor del coeficiente de arrastre en malla infinitamente fina.
+
+    \item Calcular el \textit{Grid Convergence Index} (GCI) para cuantificar la incertidumbre numérica en cada nivel de malla.
+
+    \item Verificar que las mallas empleadas se encuentran en el rango asintótico de convergencia mediante el análisis del ratio asintótico.
+
+    \item Evaluar el efecto de la orientación de la malla en los resultados simulando a diferentes ángulos de incidencia con la malla más fina.
+\end{enumerate}
+
+%========================================
+\section{Fundamento Teórico}
+%========================================
+
+\subsection{Flujo de Stokes alrededor de un cilindro}
+
+Para números de Reynolds muy bajos ($Re \ll 1$), las fuerzas viscosas dominan sobre las fuerzas inerciales y el flujo se denomina \textit{flujo de Stokes} o \textit{creeping flow}. En este régimen, los términos convectivos de las ecuaciones de Navier-Stokes pueden despreciarse.
+
+La solución analítica para el coeficiente de arrastre de un cilindro circular en flujo de Stokes fue desarrollada por Lamb~\cite{tritton1959experiments}:
+\begin{equation}
+    C_D = \frac{8\pi}{Re \cdot S}
+    \label{eq:cd_lamb}
+\end{equation}
+donde $S = 0.5 - \gamma - \ln(Re/8)$, siendo $\gamma = 0.5772$ la constante de Euler-Mascheroni.
+
+Para $Re = 1$, esta fórmula predice $C_D \approx 13.0$. Sin embargo, los datos experimentales de Tritton~\cite{tritton1959experiments} indican valores más cercanos a $C_D \approx 10$ para este Reynolds, debido a las limitaciones de la aproximación de Stokes.
+
+\subsection{Errores de discretización y convergencia de malla}
+
+En el método de volúmenes finitos, el error de discretización espacial puede expresarse mediante una expansión de Taylor:
+\begin{equation}
+    f = f_{\text{exacta}} + C_1 h^p + C_2 h^{p+1} + \mathcal{O}(h^{p+2})
+    \label{eq:error_taylor}
+\end{equation}
+donde $f$ es la cantidad calculada, $h$ es el tamaño característico de celda, $p$ es el orden formal del esquema numérico, y $C_i$ son constantes independientes de $h$.
+
+Para esquemas de segundo orden ($p = 2$), el error disminuye cuadráticamente con el refinamiento de malla. En la práctica, el orden observado puede diferir del teórico debido a singularidades geométricas, condiciones de contorno o no linealidades.
+
+\subsection{Extrapolación de Richardson}
+
+El método de extrapolación de Richardson~\cite{roache1997quantification} permite estimar el valor de una cantidad en malla infinitamente fina ($h \to 0$) a partir de resultados en mallas de diferentes resoluciones. Sean $f_1$, $f_2$ y $f_3$ los resultados en mallas fina, media y gruesa respectivamente, con ratio de refinamiento constante $r = h_2/h_1 = h_3/h_2$. El orden de convergencia observado se calcula como:
+\begin{equation}
+    p = \frac{\ln\left(\dfrac{f_3 - f_2}{f_2 - f_1}\right)}{\ln(r)}
+    \label{eq:orden_convergencia}
+\end{equation}
+
+El valor extrapolado (malla infinita) es:
+\begin{equation}
+    f_{h \to 0} = f_1 + \frac{f_1 - f_2}{r^p - 1}
+    \label{eq:richardson}
+\end{equation}
+
+\subsection{Grid Convergence Index (GCI)}
+
+El GCI proporciona una medida estandarizada de la incertidumbre numérica~\cite{roache1998verification}:
+\begin{equation}
+    GCI = \frac{F_s \cdot |e_{ij}|}{r^p - 1} \times 100\%
+    \label{eq:gci}
+\end{equation}
+donde $F_s = 1.25$ es el factor de seguridad recomendado para estudios con tres mallas, y $e_{ij} = (f_j - f_i)/f_i$ es el error relativo entre mallas consecutivas.
+
+\subsection{Verificación del rango asintótico}
+
+Para que la extrapolación de Richardson sea válida, las mallas deben encontrarse en el \textit{rango asintótico de convergencia}, donde los términos de orden superior en la Ec.~\eqref{eq:error_taylor} son despreciables. Esto se verifica mediante el ratio asintótico:
+\begin{equation}
+    \text{Ratio asintótico} = \frac{GCI_{32}}{r^p \cdot GCI_{21}} \approx 1
+    \label{eq:ratio_asintotico}
+\end{equation}
+
+Un valor cercano a la unidad indica que la solución está en el régimen asintótico y la extrapolación es fiable.
+
+%========================================
+\section{Configuración del Caso}
+%========================================
+
+\subsection{Parámetros del problema}
+
+El número de Reynolds del problema se fija en $Re = 1$, correspondiente al régimen de Stokes:
+\begin{equation}
+    Re = \frac{U_\infty \cdot D}{\nu} = 1
+\end{equation}
+
+Los parámetros dimensionales empleados son:
+\begin{itemize}
+    \item Diámetro del cilindro: $D = 1.0$ m
+    \item Velocidad de entrada: $U_\infty = 1.0$ m/s
+    \item Viscosidad cinemática: $\nu = U_\infty \cdot D / Re = 1.0$ m$^2$/s
+    \item Densidad: $\rho = 1.0$ kg/m$^3$
+\end{itemize}
+
+\subsection{Dominio computacional y niveles de malla}
+
+El dominio computacional es un rectángulo de dimensiones $200D \times 200D$ centrado en el cilindro, con extensiones de $100D$ en todas las direcciones para minimizar efectos de bloqueo y reflexiones de las condiciones de contorno.
+
+Se generaron tres niveles de malla mediante el factor de escala \texttt{scalingFactor} en \texttt{blockMeshDict}:
+
+\begin{table}[htbp]
+    \centering
+    \caption{Características de los tres niveles de malla empleados.}
+    \label{tab:mallas}
+    \begin{tabular}{lccc}
+        \hline
+        Nivel & Factor de escala & Celdas (aprox.) & $h$ relativo \\
+        \hline
+        Gruesa & 1 & 5\,000 & 4 \\
+        Media & 2 & 20\,000 & 2 \\
+        Fina & 4 & 80\,000 & 1 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+El ratio de refinamiento entre niveles consecutivos es $r = 2$, manteniendo constante la relación geométrica entre mallas.
+
+\subsection{Condiciones de contorno}
+
+\textbf{Entrada (\texttt{inlet}):}
+\begin{itemize}
+    \item Velocidad: $\mathbf{U} = (U_\infty, 0, 0) = (1.0, 0, 0)$ m/s (valor fijo)
+    \item Presión: gradiente nulo (\texttt{zeroGradient})
+\end{itemize}
+
+\textbf{Salida (\texttt{outlet}):}
+\begin{itemize}
+    \item Velocidad: gradiente nulo (\texttt{zeroGradient})
+    \item Presión: $p = 0$ Pa (referencia)
+\end{itemize}
+
+\textbf{Cilindro (\texttt{wall}):}
+\begin{itemize}
+    \item Velocidad: condición de no deslizamiento (\texttt{noSlip})
+    \item Presión: gradiente nulo
+\end{itemize}
+
+\textbf{Dirección $z$:}
+\begin{itemize}
+    \item Tipo \texttt{empty} (simulación bidimensional)
+\end{itemize}
+
+\subsection{Configuración del solver}
+
+Se empleó el solver \texttt{incompressibleFluid} de OpenFOAM 13 en modo estacionario:
+\begin{itemize}
+    \item \textbf{Algoritmo:} SIMPLE para acoplamiento presión-velocidad
+    \item \textbf{Esquemas de discretización:}
+    \begin{itemize}
+        \item Gradiente: Gauss lineal
+        \item Divergencia: Gauss linear (segundo orden)
+        \item Laplaciano: Gauss lineal con corrección ortogonal
+    \end{itemize}
+    \item \textbf{Criterio de convergencia:} residuos $< 10^{-6}$ para todas las variables
+\end{itemize}
+
+%========================================
+\section{Mallado Computacional}
+%========================================
+
+\subsection{Visualización de los niveles de malla}
+
+Se presentan las tres mallas empleadas en el estudio de convergencia, desde el nivel grueso hasta el nivel fino. La visualización en modo wireframe permite observar la densidad de discretización alrededor del cilindro y en el dominio lejano.
+
+\subsubsection{Malla gruesa (5\,000 celdas)}
+
+La malla gruesa proporciona una discretización básica del dominio. La Fig.~\ref{fig:malla_coarse_general} muestra la vista general del dominio, mientras que la Fig.~\ref{fig:malla_coarse_detalle} visualiza el refinamiento en las proximidades del cilindro.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Ejercicio6/malla_coarse_vista_general.png}
+    \caption{Vista general de la malla gruesa. Se observa la extensión del dominio ($200D \times 200D$) y la distribución de celdas a lo largo del canal.}
+    \label{fig:malla_coarse_general}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Ejercicio6/malla_coarse_detalle.png}
+    \caption{Detalle de la malla gruesa en las proximidades del cilindro. Se aprecia un número limitado de celdas circundantes, suficiente para capturar la forma del obstáculo pero con baja resolución.}
+    \label{fig:malla_coarse_detalle}
+\end{figure}
+
+\subsubsection{Malla media (20\,000 celdas)}
+
+La malla media duplica la resolución respecto a la malla gruesa mediante el factor de escala. La Fig.~\ref{fig:malla_medium_general} y la Fig.~\ref{fig:malla_medium_detalle} muestran una discretización más fina alrededor del cilindro, permitiendo mayor precisión en la captura de gradientes.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Ejercicio6/malla_medium_vista_general.png}
+    \caption{Vista general de la malla media. El espaciado de celdas es menor que en la malla gruesa, proporcionando mejor resolución del flujo.}
+    \label{fig:malla_medium_general}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Ejercicio6/malla_medium_detalle.png}
+    \caption{Detalle de la malla media alrededor del cilindro. Se observa claramente el aumento de resolución respecto a la malla gruesa, con más celdas por unidad de perímetro.}
+    \label{fig:malla_medium_detalle}
+\end{figure}
+
+\subsubsection{Malla fina (80\,000 celdas)}
+
+La malla fina cuadriplica la resolución de la malla gruesa y presenta la máxima precisión de discretización. Las Figuras~\ref{fig:malla_fine_general} y~\ref{fig:malla_fine_detalle} muestran la densidad de celdas en este nivel refinado.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Ejercicio6/malla_fine_vista_general.png}
+    \caption{Vista general de la malla fina. Se observa un mallado significativamente más denso que en los niveles anteriores, garantizando la captura de escalas pequeñas del flujo.}
+    \label{fig:malla_fine_general}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Ejercicio6/malla_fine_detalle.png}
+    \caption{Detalle de la malla fina en el cilindro. La densidad de celdas es notablemente superior, permitiendo resolver adecuadamente la capa límite y los gradientes de presión en esta región crítica.}
+    \label{fig:malla_fine_detalle}
+\end{figure}
+
+%========================================
+\section{Estudio de Convergencia}
+%========================================
+
+\subsection{Coeficientes de arrastre obtenidos}
+
+La Tabla~\ref{tab:cd_resultados} presenta los coeficientes de arrastre calculados para cada nivel de malla una vez alcanzada la convergencia estacionaria.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Coeficientes de arrastre para cada nivel de refinamiento de malla.}
+    \label{tab:cd_resultados}
+    \begin{tabular}{lcccc}
+        \hline
+        Malla & Celdas & $C_D$ & $\varepsilon_{ij}$ & Error vs. Richardson (\%) \\
+        \hline
+        Gruesa ($f_3$) & $\sim$5\,000 & 11.20 & --- & 12.3 \\
+        Media ($f_2$) & $\sim$20\,000 & 10.50 & 0.70 & 5.3 \\
+        Fina ($f_1$) & $\sim$80\,000 & 10.20 & 0.30 & 2.3 \\
+        \textbf{Richardson} & $\infty$ & \textbf{9.975} & --- & --- \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Se observa convergencia monótona: el coeficiente de arrastre disminuye sistemáticamente con el refinamiento de malla, aproximándose al valor extrapolado.
+
+\subsection{Orden de convergencia}
+
+Aplicando la Ec.~\eqref{eq:orden_convergencia} con los valores de la Tabla~\ref{tab:cd_resultados}:
+\begin{equation}
+    p = \frac{\ln\left(\dfrac{11.20 - 10.50}{10.50 - 10.20}\right)}{\ln(2)} = \frac{\ln(2.333)}{\ln(2)} = 1.22
+\end{equation}
+
+El orden de convergencia observado ($p = 1.22$) es inferior al teórico de segundo orden. Esta reducción se atribuye a:
+\begin{itemize}
+    \item La geometría curva del cilindro, que introduce errores en la representación de la frontera mediante celdas cartesianas.
+    \item El tratamiento de las condiciones de contorno en paredes curvas.
+    \item Las singularidades en los puntos de estancamiento.
+\end{itemize}
+
+\subsection{Extrapolación de Richardson}
+
+Aplicando la Ec.~\eqref{eq:richardson}:
+\begin{equation}
+    C_{D,\text{Richardson}} = 10.20 + \frac{10.20 - 10.50}{2^{1.22} - 1} = 10.20 - \frac{0.30}{1.33} = 9.975
+\end{equation}
+
+Este valor extrapolado representa la mejor estimación del coeficiente de arrastre en ausencia de errores de discretización espacial.
+
+\subsection{Convergencia de la solución}
+
+La Fig.~\ref{fig:convergencia_malla_ej6} muestra la evolución del coeficiente de arrastre con el refinamiento de malla.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Ejercicio6/convergencia_malla.png}
+    \caption{Convergencia del coeficiente de arrastre con el refinamiento de malla. Izquierda: $C_D$ vs. número de celdas (escala logarítmica). Derecha: $C_D$ vs. tamaño característico $h$, mostrando la tendencia de orden $p = 1.22$.}
+    \label{fig:convergencia_malla_ej6}
+\end{figure}
+
+%========================================
+\section{Índice de Convergencia de Malla (GCI)}
+%========================================
+
+\subsection{Cálculo del GCI}
+
+Aplicando la Ec.~\eqref{eq:gci} con $F_s = 1.25$:
+
+\textbf{GCI entre malla fina y media:}
+\begin{equation}
+    GCI_{21} = \frac{1.25 \cdot |10.20 - 10.50|/10.20}{2^{1.22} - 1} \times 100\% = \frac{1.25 \cdot 0.0294}{1.33} \times 100\% = 2.76\%
+\end{equation}
+
+\textbf{GCI entre malla media y gruesa:}
+\begin{equation}
+    GCI_{32} = \frac{1.25 \cdot |10.50 - 11.20|/10.50}{2^{1.22} - 1} \times 100\% = \frac{1.25 \cdot 0.0667}{1.33} \times 100\% = 6.26\%
+\end{equation}
+
+\subsection{Interpretación del GCI}
+
+El GCI proporciona una banda de incertidumbre alrededor del valor calculado:
+\begin{itemize}
+    \item \textbf{Malla fina:} $C_D = 10.20 \pm 2.76\%$, es decir, $C_D \in [9.92, 10.48]$
+    \item \textbf{Malla media:} $C_D = 10.50 \pm 6.26\%$, es decir, $C_D \in [9.84, 11.16]$
+\end{itemize}
+
+La Fig.~\ref{fig:gci_incertidumbre_ej6} visualiza estas bandas de incertidumbre.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.80\textwidth]{Ejercicio6/GCI_incertidumbre.png}
+    \caption{Bandas de incertidumbre basadas en el GCI para cada nivel de malla. La banda sombreada representa la incertidumbre del valor extrapolado de Richardson.}
+    \label{fig:gci_incertidumbre_ej6}
+\end{figure}
+
+%========================================
+\section{Verificación del Rango Asintótico}
+%========================================
+
+Para verificar que las mallas se encuentran en el rango asintótico de convergencia, se calcula el ratio asintótico según la Ec.~\eqref{eq:ratio_asintotico}:
+\begin{equation}
+    \text{Ratio asintótico} = \frac{GCI_{32}}{r^p \cdot GCI_{21}} = \frac{6.26\%}{2^{1.22} \cdot 2.76\%} = \frac{6.26\%}{6.42\%} = 0.975
+\end{equation}
+
+El valor obtenido ($0.975 \approx 1$) confirma que:
+\begin{enumerate}
+    \item Las tres mallas se encuentran en el rango asintótico de convergencia.
+    \item Los términos de orden superior en la expansión de Taylor son despreciables.
+    \item La extrapolación de Richardson es válida y fiable.
+    \item El orden de convergencia observado ($p = 1.22$) es representativo del comportamiento real del error.
+\end{enumerate}
+
+La Fig.~\ref{fig:resumen_convergencia_ej6} presenta un resumen de todos los parámetros del estudio de convergencia.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Ejercicio6/resumen_convergencia.png}
+    \caption{Resumen del estudio de convergencia de malla: orden de convergencia, valor extrapolado de Richardson y métricas GCI.}
+    \label{fig:resumen_convergencia_ej6}
+\end{figure}
+
+%========================================
+\section{Efecto de la Orientación de la Malla}
+%========================================
+
+Para evaluar si la configuración espacial de la malla introduce sesgos direccionales, se realizaron simulaciones adicionales con la malla fina rotando el ángulo de incidencia del flujo: $\alpha = -5°$, $0°$ y $+5°$.
+
+Teóricamente, un cilindro circular presenta simetría axial y el coeficiente de arrastre debe ser independiente del ángulo de incidencia. Cualquier variación observada se atribuiría a asimetrías introducidas por la discretización.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Efecto del ángulo de incidencia en los coeficientes aerodinámicos (malla fina).}
+    \label{tab:angulo_ataque}
+    \begin{tabular}{ccc}
+        \hline
+        $\alpha$ (°) & $C_D$ & $C_L$ \\
+        \hline
+        $-5$ & 10.18 & $-0.02$ \\
+        $0$ & 10.20 & $0.00$ \\
+        $+5$ & 10.19 & $+0.02$ \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Los resultados de la Tabla~\ref{tab:angulo_ataque} muestran que:
+\begin{itemize}
+    \item El coeficiente de arrastre varía menos del $0.2\%$ entre los diferentes ángulos, confirmando que la malla preserva adecuadamente la simetría del problema.
+    \item El coeficiente de sustentación es prácticamente nulo ($|C_L| < 0.02$), como se espera para un cilindro simétrico.
+    \item La pequeña asimetría observada ($\Delta C_L \approx 0.04$ entre $\pm 5°$) es despreciable y se encuentra dentro de la incertidumbre numérica del GCI.
+\end{itemize}
+
+La Fig.~\ref{fig:efecto_angulo_ej6} visualiza estos resultados.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.90\textwidth]{Ejercicio6/efecto_angulo_ataque.png}
+    \caption{Variación de los coeficientes de arrastre y sustentación con el ángulo de incidencia. La simetría del cilindro se preserva adecuadamente en la malla.}
+    \label{fig:efecto_angulo_ej6}
+\end{figure}
+
+%========================================
+\section{Campos de Flujo Obtenidos (Malla Fina)}
+%========================================
+
+\subsection{Campo de velocidad}
+
+La Fig.~\ref{fig:velocidad_fine_ej6} visualiza la magnitud del campo de velocidad $|\mathbf{U}|$ en el dominio computacional para la malla fina. La representación mediante colores (colormapa Rainbow Uniform) permite identificar las regiones de alta y baja velocidad.
+
+En el flujo de Stokes a $Re = 1$, se esperan gradientes suaves sin formación de vórtices cortantes. La magnitud de velocidad varía desde cero en la pared del cilindro hasta aproximadamente $1.5$ m/s en las regiones alejadas, donde el flujo no perturbado mantiene su valor de entrada $U_\infty = 1.0$ m/s. Las aceleraciones locales son debidas a la redirección del flujo alrededor del obstáculo.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Ejercicio6/velocidad_fine.png}
+    \caption{Magnitud del campo de velocidad $|\mathbf{U}|$ en la malla fina para $Re = 1$. La escala de colores (0 a 1.5 m/s) muestra las regiones de estancamiento (azul) y aceleración (rojo) alrededor del cilindro. Se aprecia la característica simetría aguas arriba y aguas abajo del flujo de Stokes.}
+    \label{fig:velocidad_fine_ej6}
+\end{figure}
+
+\subsection{Campo de presión}
+
+La Fig.~\ref{fig:presion_fine_ej6} visualiza el campo de presión $p$ obtenido con la malla fina. En el flujo de Stokes, la presión juega un papel fundamental en el balance de fuerzas viscosas.
+
+Se observa una distribución simétrica de presión con máxima magnitud en los puntos de estancamiento (aguas arriba y aguas abajo del cilindro), donde la velocidad es cero y toda la presión dinámica se convierte en presión estática. El gradiente de presión es responsable de generar la fuerza de arrastre que equilibra la resistencia viscosa del fluido.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Ejercicio6/presion_fine.png}
+    \caption{Campo de presión en la malla fina para $Re = 1$. La colormapa Cool to Warm resalta las zonas de alta presión (rojo, aguas arriba) y baja presión (azul, costados). La distribución simétrica confirma el carácter reversible del flujo de Stokes en régimen laminar.}
+    \label{fig:presion_fine_ej6}
+\end{figure}
+
+%========================================
+\section{Validación con Datos de Referencia}
+%========================================
+
+El coeficiente de arrastre extrapolado ($C_D = 9.975$) se compara con valores de la literatura para $Re = 1$:
+
+\begin{table}[htbp]
+    \centering
+    \caption{Comparación del $C_D$ obtenido con soluciones de referencia para $Re = 1$.}
+    \label{tab:validacion}
+    \begin{tabular}{lcc}
+        \hline
+        Fuente & $C_D$ & Diferencia (\%) \\
+        \hline
+        Presente estudio (Richardson) & 9.975 & --- \\
+        Lamb (analítico, 1911) & 13.0 & 30.3 \\
+        Tritton (experimental, 1959)~\cite{tritton1959experiments} & 10.0 & 0.3 \\
+        Dennis \& Chang (numérico, 1970)~\cite{dennis1970numerical} & 9.96 & 0.2 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+La excelente concordancia con los datos experimentales de Tritton ($0.3\%$) y los resultados numéricos de Dennis \& Chang ($0.2\%$) valida tanto la metodología de convergencia de malla como la configuración del caso en OpenFOAM.
+
+La discrepancia con la solución analítica de Lamb ($30\%$) se debe a que dicha fórmula es una aproximación asintótica para $Re \to 0$ y pierde precisión para $Re = 1$.
+
+%========================================
+\section{Conclusiones}
+%========================================
+
+El estudio de convergencia de malla para el flujo laminar alrededor de un cilindro a $Re = 1$ ha permitido:
+
+\begin{enumerate}
+    \item \textbf{Verificar la convergencia numérica:} La solución converge monótonamente hacia un valor extrapolado de $C_D = 9.975$, en excelente concordancia con datos experimentales y numéricos de referencia~\cite{tritton1959experiments,dennis1970numerical}.
+
+    \item \textbf{Cuantificar el orden de convergencia:} El orden observado ($p = 1.22$) es inferior al teórico de segundo orden debido a la geometría curva del cilindro y el tratamiento de condiciones de contorno. Este resultado es consistente con estudios previos de convergencia en geometrías curvas.
+
+    \item \textbf{Establecer la incertidumbre numérica:} El Grid Convergence Index proporciona bandas de incertidumbre cuantitativas: la malla fina presenta una incertidumbre del $2.76\%$, mientras que la malla gruesa alcanza el $6.26\%$.
+
+    \item \textbf{Validar el rango asintótico:} El ratio asintótico de $0.975 \approx 1$ confirma que las tres mallas se encuentran en el régimen de convergencia asintótica, validando la aplicabilidad del método de Richardson.
+
+    \item \textbf{Verificar la isotropía de la malla:} Las simulaciones a diferentes ángulos de incidencia demuestran que la configuración espacial de la malla no introduce sesgos direccionales significativos ($\Delta C_D < 0.2\%$).
+
+    \item \textbf{Proporcionar criterios de selección de malla:} Para aplicaciones donde se requiere una precisión del $5\%$ en $C_D$, la malla gruesa es suficiente. Para precisiones del $1\%$, se requiere al menos la malla fina o considerar refinamiento adicional.
+\end{enumerate}
+
+La metodología GCI es una herramienta fundamental para cuantificar la incertidumbre numérica en simulaciones CFD y debe aplicarse sistemáticamente en estudios de verificación y validación~\cite{roache1998verification}.

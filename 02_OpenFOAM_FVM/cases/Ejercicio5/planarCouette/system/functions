@@ -1,0 +1,56 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      functions;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// include packaged functionObjects using #includeFunc
+// #includeFunc
+
+// ************************************************************************* //
+#includeFunc  graphUniform
+
+wallShear
+    {
+        type            wallShearStress;
+        functionObjectLibs ("libfieldFunctionObjects.so"); // optional if already loaded
+        enabled         true;
+        writeControl    writeTime;       // or writeTime
+        writeInterval   1;              // adjust as needed
+    }
+  yPlusCalc                 // unique name #1
+    {
+        type                  yPlus;
+        functionObjectLibs   ("libfieldFunctionObjects.so");
+        enabled               true;
+
+        // write every time step; change to 'writeTime' if you only want on writes
+        writeControl          writeTime;
+        writeInterval         1;
+
+        // optional: region/surfaces/patches config if needed
+    }
+
+    residualsCalc             // unique name #2
+    {
+        // If your build provides 'residuals':
+        type                  residuals;
+        functionObjectLibs   ("libutilityFunctionObjects.so");
+        enabled               true;
+
+        writeControl          writeTime;
+        writeInterval         1;
+
+        fields               (p U k epsilon nut);
+        log                   yes;
+    }

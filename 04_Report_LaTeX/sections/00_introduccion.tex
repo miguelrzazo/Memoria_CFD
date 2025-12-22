@@ -1,0 +1,89 @@
+
+%========================================
+% CAPITULO 0: INTRODUCCIÓN Y OBJETIVOS
+%========================================
+\mychapter{0}{Introducción y Objetivos Generales}
+\label{chap:introduccion}
+
+%========================================
+\section*{Introducción}
+%========================================
+
+La mecánica de fluidos computacional (CFD, \textit{Computational Fluid Dynamics}) se ha convertido en una herramienta fundamental en la ingeniería aeronáutica y en el análisis de problemas complejos de dinámica de fluidos. En las últimas décadas, el avance exponencial de la capacidad computacional ha permitido que las simulaciones numéricas complementen y, en muchos casos, sustituyan los ensayos en túneles de viento. Sin embargo, comprender los fundamentos teóricos detrás de estos métodos numéricos es esencial para su correcta aplicación y validación.
+
+El presente trabajo integra dos enfoques complementarios para el análisis aerodinámico: (1) métodos potenciales implementados en \textit{MATLAB}, que proporcionan soluciones rápidas basadas en la teoría clásica de perfiles y alas, y (2) simulaciones CFD mediante el método de volúmenes finitos en \textit{OpenFOAM}, que capturan fenómenos viscosos y turbulentos con mayor fidelidad. Esta combinación permite tanto validar los métodos simples contra resultados numéricos más sofisticados como entender las limitaciones y el alcance de cada técnica.
+
+
+%========================================
+\section*{Estructura de la memoria}
+%========================================
+
+La presente memoria se organiza en siete capítulos temáticos dedicados a cada ejercicio:
+
+\begin{enumerate}
+    \item \textbf{Capítulo 1 -- Método de Hess-Smith:} Implementación del método de paneles para el cálculo de distribuciones de presión y coeficientes aerodinámicos sobre perfiles bidimensionales. Validación contra XFLR5.
+
+    \item \textbf{Capítulo 2 -- Método de Multhopp (Lifting Line):} Aplicación de la teoría de línea sustentadora a alas rectas, incluyendo efectos de alerones. Comparación MATLAB vs. XFLR5 de polares y distribuciones de carga.
+
+    \item \textbf{Capítulo 3 -- Método Vortex Lattice (VLM):} Extensión tridimensional a configuraciones alares complejas (tandem wing). Análisis de interferencia aerodinámica entre alas.
+
+    \item \textbf{Capítulo 4 -- Esquemas de Discretización:} Análisis de convergencia de esquemas upwind, central y high-order para la ecuación de convección-difusión 1D en OpenFOAM. Comparación contra soluciones analíticas.
+
+    \item \textbf{Capítulo 5 -- Wall Functions en Flujo de Couette:} Simulación de capa límite turbulenta planar con énfasis en la modelización cercana a pared. Comparación de estrategia Low-Reynolds vs. funciones de pared estándar.
+
+    \item \textbf{Capítulo 6 -- Cilindro Laminar:} Análisis del desprendimiento de vórtices en régimen laminar ($Re = 40$). Validación contra soluciones clásicas de Dennis \& Chang (1970).
+
+    \item \textbf{Capítulo 7 -- Cilindro Turbulento Transitorio:} Simulación completa del flujo periódico alrededor de cilindro en régimen subcrítico con modelo RANS $k$-$\omega$ SST. Cálculo del número de Strouhal y comparación con experimentos de Roshko.
+\end{enumerate}
+
+%========================================
+\section*{Herramientas y entorno computacional}
+%========================================
+
+\subsection*{Software utilizado}
+
+Las simulaciones y análisis se han llevado a cabo con las siguientes herramientas:
+
+\begin{itemize}
+    \item \textbf{\textit{MATLAB} R2025a:} Para la implementación de métodos potenciales (Hess-Smith, Multhopp, VLM) y post-procesamiento de resultados OpenFOAM. Se aprovechan las capacidades de álgebra lineal y visualización de MATLAB para análisis numéricos.
+
+    \item \textbf{\textit{OpenFOAM} 13:} Software de código abierto para CFD basado en el método de volúmenes finitos. Se ejecuta mediante contenedor \textit{Docker} para garantizar la portabilidad entre plataformas.
+
+    \item \textbf{\textit{ParaView} 5.12:} Software de visualización, empleado tanto en modo gráfico interactivo como mediante scripts \textit{pvpython} para captura automatizada de figuras de campos de flujo.
+
+    \item \textbf{\textit{XFLR5}:} Herramienta especializada en análisis aerodinámico de bajo coste computacional, utilizada para validación de métodos potenciales. Proporciona polares de alas, distribuciones de presión y análisis de estabilidad.
+
+    \item \textbf{\LaTeX y \textit{Git}:} Para redacción de la memoria y control de versiones del proyecto.
+\end{itemize}
+
+\subsection*{Hardware y sistema operativo}
+
+\begin{itemize}
+    \item \textbf{Procesador:} Apple M1 (ArquitecturaARM64)
+    \item \textbf{Memoria RAM:} 16 GB
+    \item \textbf{Sistema operativo:} macOS Tahoe 26.1 
+    \item \textbf{Nota:} La arquitectura Apple Silicon (ARM64) requiere compatibilidad especial. OpenFOAM 13 se ejecuta en un contenedor Docker, mientras que MATLAB y ParaView funcionan de forma nativa.
+\end{itemize}
+
+\subsection*{Nota sobre OpenFOAM en macOS}
+
+%========================================
+\section*{Disponibilidad del código}
+%========================================
+
+Con el objetivo de facilitar la reproducibilidad de los resultados y permitir un análisis más detallado del código fuente, se ha optado por publicar el material completo en un repositorio público de \textit{GitHub}, evitando así anexos excesivamente extensos en la memoria.
+
+\textbf{Repositorio:}
+\begin{center}
+\url{https://github.com/MiguelRosa95/Memoria_CFD}
+\end{center}
+
+El repositorio incluye:
+\begin{itemize}
+    \item Scripts MATLAB para los ejercicios 1-3 (métodos de paneles, lifting line y VLM) con figuras exportadas automáticamente.
+    \item Casos completos de OpenFOAM para los ejercicios 4-7 con archivos de configuración (\texttt{0/}, \texttt{system/}, \texttt{constant/}).
+    \item Scripts de post-procesamiento: MATLAB (\texttt{plot\_*.m}) para análisis numérico y Python (\texttt{pvpython}) para automatización de ParaView.
+    \item Archivos fuente \LaTeX de esta memoria con estructura de capítulos y referencias bibliográficas.
+\end{itemize}
+
+La estructura permite que cualquier persona con acceso al repositorio pueda reproducir exactamente los resultados presentados en esta memoria, fomentando la transparencia en el ámbito académico.

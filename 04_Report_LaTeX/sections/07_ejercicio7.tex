@@ -1,0 +1,458 @@
+%========================================
+% CAPITULO 7: FLUJO TURBULENTO SOBRE CILINDRO
+%========================================
+\chapter{Aerodinámica Externa: Simulación}
+\label{chap:ejercicio7}
+
+%========================================
+\section{Introducción}
+%========================================
+
+El flujo alrededor de cuerpos romos, como cilindros circulares, constituye uno de los problemas fundamentales en aerodinámica externa. A diferencia de los perfiles aerodinámicos diseñados para minimizar la separación del flujo, los cilindros presentan separación masiva de la capa límite, generando una estela turbulenta caracterizada por el desprendimiento periódico de vórtices~\cite{williamson1996vortex}.
+
+Este fenómeno, conocido como \textit{calle de von Kármán}, ocurre cuando el número de Reynolds supera un valor crítico (aproximadamente $Re \approx 40$). Los vórtices se desprenden alternativamente de ambos lados del cilindro, generando fluctuaciones periódicas en las fuerzas de sustentación y arrastre. Estas oscilaciones pueden provocar vibraciones inducidas por vórtices (\textit{vortex-induced vibrations}, VIV), fenómeno de gran relevancia en ingeniería para estructuras como chimeneas, cables submarinos y puentes.
+
+El número de Reynolds define el régimen del flujo~\cite{roshko1954}:
+\begin{itemize}
+    \item $Re < 5$: Flujo adherido sin separación.
+    \item $5 < Re < 40$: Separación con recirculación estacionaria.
+    \item $40 < Re < 200$: Desprendimiento periódico laminar (calle de von Kármán).
+    \item $200 < Re < 3 \times 10^5$: Régimen subcrítico con estela turbulenta y capa límite laminar.
+    \item $Re > 3 \times 10^5$: Régimen supercrítico con transición de la capa límite a turbulenta.
+\end{itemize}
+
+La caracterización de este flujo se realiza mediante el número de Strouhal ($St$), que relaciona la frecuencia de desprendimiento de vórtices ($f$) con la velocidad de la corriente ($U_\infty$) y el diámetro del cilindro ($D$):
+\begin{equation}
+    St = \frac{f \cdot D}{U_\infty}
+\end{equation}
+
+Para cilindros circulares en el régimen subcrítico ($300 < Re < 2 \times 10^5$), Roshko~\cite{roshko1954} determinó experimentalmente que el número de Strouhal se encuentra en el rango $St \approx 0.20 - 0.21$, valor que ha sido confirmado por numerosos estudios posteriores~\cite{williamson1996vortex}.
+
+%========================================
+\section{Objetivo}
+%========================================
+
+El objetivo de este ejercicio es simular y analizar el comportamiento aerodinámico de un cilindro circular enfrentado a una corriente uniforme en régimen transitorio, aplicando los conocimientos adquiridos en mallado, condiciones de contorno, configuración de modelos de turbulencia y post-procesamiento.
+
+Se pretende capturar el fenómeno de desprendimiento periódico de vórtices mediante una simulación RANS (\textit{Reynolds-Averaged Navier-Stokes}) transitoria, y caracterizar el flujo mediante el cálculo de:
+\begin{itemize}
+    \item La distribución del coeficiente de presión $C_p$ sobre la superficie del cilindro.
+    \item La evolución temporal de los coeficientes de arrastre ($C_D$) y sustentación ($C_L$).
+    \item El número de Strouhal mediante análisis espectral de las fuerzas fluctuantes.
+    \item La comparación entre campos instantáneos y campos promediados en el tiempo.
+\end{itemize}
+
+%========================================
+\section{Condiciones de simulación}
+%========================================
+
+\subsection{Parámetros del problema}
+
+El número de Reynolds se calculó según la última cifra del DNI del alumno:
+\begin{equation}
+    Re = 200 + l_D \times 50 = 200 + 7 \times 50 = 550
+\end{equation}
+donde $l_D = 7$ es la última cifra del DNI.
+
+Este valor sitúa el flujo en el régimen subcrítico con estela turbulenta, donde se espera un desprendimiento periódico de vórtices claramente definido.
+
+Los parámetros dimensionales del problema se definieron como:
+\begin{itemize}
+    \item Diámetro del cilindro: $D = 1.0$ m
+    \item Velocidad de corriente libre: $U_\infty = 1.0$ m/s
+    \item Viscosidad cinemática: $\nu = \dfrac{U_\infty \cdot D}{Re} = \dfrac{1.0 \times 1.0}{550} = 1.82 \times 10^{-3}$ m$^2$/s
+\end{itemize}
+
+\subsection{Modelo de turbulencia}
+
+Se empleó el modelo $k$-$\omega$ SST (\textit{Shear Stress Transport}) de Menter~\cite{menter1994two,versteeg2007introduction}, que combina las ventajas del modelo $k$-$\omega$ cerca de las paredes (buena predicción de separación) con las del modelo $k$-$\varepsilon$ en zonas alejadas (menor sensibilidad a condiciones de entrada).
+
+Las ecuaciones de transporte para la energía cinética turbulenta ($k$) y la tasa de disipación específica ($\omega$) son:
+\begin{equation}
+    \frac{\partial k}{\partial t} + U_j \frac{\partial k}{\partial x_j} = P_k - \beta^* k \omega + \frac{\partial}{\partial x_j} \left[ (\nu + \sigma_k \nu_t) \frac{\partial k}{\partial x_j} \right]
+\end{equation}
+\begin{equation}
+    \frac{\partial \omega}{\partial t} + U_j \frac{\partial \omega}{\partial x_j} = \alpha S^2 - \beta \omega^2 + \frac{\partial}{\partial x_j} \left[ (\nu + \sigma_\omega \nu_t) \frac{\partial \omega}{\partial x_j} \right] + 2(1-F_1) \sigma_{\omega 2} \frac{1}{\omega} \frac{\partial k}{\partial x_j} \frac{\partial \omega}{\partial x_j}
+\end{equation}
+
+Este modelo es especialmente efectivo para flujos con separación y gradientes de presión adversos, características presentes en el flujo alrededor de cilindros.
+
+\subsection{Dominio computacional y malla}
+
+El dominio computacional se generó mediante el utilitario \texttt{blockMesh} de OpenFOAM. \\
+Se diseñó un dominio rectangular con las siguientes dimensiones para minimizar efectos de bloqueo y reflexiones de las condiciones de contorno:
+\begin{itemize}
+    \item Extensión aguas arriba: $50D$ (entrada)
+    \item Extensión aguas abajo: $50D$ (salida)
+    \item Extensión lateral: $\pm 50D$ (superior e inferior)
+    \item Espesor en dirección $z$: 1 celda (simulación 2D)
+\end{itemize}
+
+La malla se refinó en las proximidades del cilindro mediante un factor de escala progresivo para capturar adecuadamente la capa límite y la separación del flujo. La malla resultante contiene aproximadamente 30\,000 celdas hexaédricas.
+
+La Fig.~\ref{fig:malla_cilindro_ej7} muestra un detalle de la malla en las cercanías del cilindro.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.75\textwidth]{Ejercicio7/malla_cilindro.png}
+    \caption{Detalle de la malla computacional en las proximidades del cilindro circular.}
+    \label{fig:malla_cilindro_ej7}
+\end{figure}
+
+\subsection{Condiciones de contorno}
+
+Las condiciones de contorno se configuraron en los archivos del directorio \texttt{0/} del caso de OpenFOAM:
+
+\textbf{Entrada (\texttt{inlet}):}
+\begin{itemize}
+    \item Velocidad: $\mathbf{U} = (U_\infty, 0, 0) = (1.0, 0, 0)$ m/s (valor fijo)
+    \item Presión: gradiente nulo (\texttt{zeroGradient})
+    \item Energía cinética turbulenta: $k = 3.75 \times 10^{-4}$ m$^2$/s$^2$ (intensidad turbulenta $I = 1\%$)
+    \item Tasa de disipación específica: $\omega = 1.0$ s$^{-1}$
+\end{itemize}
+
+\textbf{Salida (\texttt{outlet}):}
+\begin{itemize}
+    \item Velocidad: gradiente nulo (\texttt{zeroGradient})
+    \item Presión: $p = 0$ Pa (referencia)
+    \item Variables turbulentas: gradiente nulo
+\end{itemize}
+
+\textbf{Cilindro (\texttt{wall}):}
+\begin{itemize}
+    \item Velocidad: condición de no deslizamiento (\texttt{noSlip})
+    \item Presión: gradiente nulo
+    \item $k$: \texttt{kqRWallFunction} (función de pared de bajo Reynolds)
+    \item $\omega$: \texttt{omegaWallFunction}
+\end{itemize}
+
+\textbf{Fronteras superior e inferior:}
+\begin{itemize}
+    \item Condición de simetría (\texttt{symmetry}) para todas las variables
+\end{itemize}
+
+\textbf{Dirección $z$ (frente y posterior):}
+\begin{itemize}
+    \item Tipo \texttt{empty} (simulación bidimensional)
+\end{itemize}
+
+\subsection{Configuración del solver}
+
+Se utilizó el solver \texttt{incompressibleFluid} de OpenFOAM 13 con las siguientes configuraciones:
+
+\begin{itemize}
+    \item \textbf{Tiempo de simulación:} $t_{\text{final}} = 50$ s
+    \item \textbf{Paso temporal:} adaptativo con número de Courant máximo $Co_{\max} = 0.5$
+    \item \textbf{Intervalo de escritura:} $\Delta t_{\text{write}} = 0.1$ s
+    \item \textbf{Algoritmo de acoplamiento presión-velocidad:} PIMPLE
+    \item \textbf{Esquemas de discretización:}
+    \begin{itemize}
+        \item Temporal: Euler implícito de primer orden
+        \item Gradiente: método de Gauss lineal
+        \item Divergencia: esquema \texttt{linearUpwind} (segundo orden) para velocidad; \texttt{upwind} para variables turbulentas
+        \item Laplaciano: Gauss lineal con corrección ortogonal
+    \end{itemize}
+\end{itemize}
+
+\subsection{Post-procesamiento}
+
+Se configuraron las siguientes funciones de post-procesamiento \\
+en el archivo \texttt{system/controlDict}:
+
+\begin{enumerate}
+    \item \textbf{Función \texttt{forceCoeffsIncompressible}:} cálculo de coeficientes aerodinámicos ($C_D$, $C_L$, $C_M$) en cada paso de tiempo, con área de referencia $A_{\text{ref}} = D \times 1$ m$^2$ y velocidad de referencia $U_\infty = 1$ m/s.
+
+    \item \textbf{Función \texttt{patchSurface}:} extracción de campos (presión, velocidad) sobre la superficie del cilindro para el análisis de la distribución de $C_p$.
+
+    \item \textbf{Función \texttt{fieldAverage}:} cálculo de campos promediados en el tiempo ($\bar{U}$, $\bar{p}$) y fluctuaciones RMS para la comparación entre campos instantáneos y promedios.
+\end{enumerate}
+
+Adicionalmente, se desarrolló un script de MATLAB (\texttt{plot\_ejercicio7.m}) para el análisis espectral mediante FFT (\textit{Fast Fourier Transform}) de las series temporales de fuerzas, permitiendo la determinación del número de Strouhal.
+
+%========================================
+\section{Resultados}
+%========================================
+
+\subsection{Distribución de $C_p$ sobre el cilindro}
+
+Se ha analizado la distribución del coeficiente de presión $C_p$ sobre la superficie del cilindro en varios instantes representativos del flujo periódico. El coeficiente de presión se define como:
+\begin{equation}
+    C_p = \frac{p - p_\infty}{\frac{1}{2} \rho U_\infty^2}
+\end{equation}
+donde $p$ es la presión local, $p_\infty$ es la presión de referencia (entrada), y $\rho U_\infty^2 / 2$ es la presión dinámica.
+
+La Fig.~\ref{fig:Cp_distribucion_ej7} presenta la distribución de $C_p$ en función del ángulo $\theta$ \\
+medido desde el punto de estancamiento frontal ($\theta = 0^\circ$ corresponde al frente del cilindro, $\theta = \pm 180^\circ$ a la parte posterior). \\
+Se muestran cuatro instantes de tiempo distintos ($t = 25$, 30, 40, 50 s) junto con la solución teórica del flujo potencial no viscoso.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Ejercicio7/Cp_distribucion.png}
+    \caption{Distribución del coeficiente de presión $C_p$ sobre la superficie del cilindro en diferentes instantes de tiempo. Se compara con la solución teórica de flujo potencial (línea discontinua negra).}
+    \label{fig:Cp_distribucion_ej7}
+\end{figure}
+
+\textbf{Análisis de la distribución de $C_p$:}
+
+\begin{enumerate}
+    \item \textbf{Punto de estancamiento frontal ($\theta = 0^\circ$):} Se observa $C_p \approx 1.0$ en todos los instantes, coincidiendo con la predicción del teorema de Bernoulli para flujo potencial. En este punto, la velocidad es nula y la presión alcanza su valor máximo.
+
+    \item \textbf{Flancos laterales ($\theta \approx \pm 70^\circ - 90^\circ$):} La presión alcanza sus valores mínimos ($C_p \approx -2.5$ a $-3.0$) debido a la aceleración del flujo alrededor del cilindro. Estos valores son significativamente más bajos que la predicción del flujo potencial ($C_p \approx -3.0$ en $\theta = \pm 90^\circ$), lo cual es consecuencia de los efectos viscosos.
+
+    \item \textbf{Zona posterior ($\theta \approx \pm 120^\circ - 180^\circ$):} Aquí se observa la mayor discrepancia con la teoría potencial. El flujo real presenta separación de la capa límite, generando una región de baja presión casi constante en la estela ($C_p \approx -1.0$ a $-1.2$). Esta zona de baja presión en la base del cilindro es la principal responsable del arrastre de presión.
+
+    \item \textbf{Variaciones temporales:} Las diferencias entre los distintos instantes de tiempo son evidentes, particularmente en la zona posterior del cilindro. Estas fluctuaciones se deben al desprendimiento alternado de vórtices de la calle de von Kármán. Los picos y valles en la distribución de presión migran con el tiempo, reflejando la naturaleza transitoria del flujo.
+
+    \item \textbf{Asimetría instantánea:} A diferencia de la solución teórica simétrica, las distribuciones instantáneas presentan asimetría debido al desprendimiento no simultáneo de vórtices de ambos lados del cilindro, lo cual genera el coeficiente de sustentación fluctuante.
+\end{enumerate}
+
+La discrepancia entre la simulación y la teoría potencial evidencia la importancia de los efectos viscosos y la separación del flujo en cuerpos romos, fenómenos que no pueden ser capturados por modelos de flujo potencial.
+
+\subsection{Coeficiente de resistencia y comparación experimental}
+
+Se ha calculado la evolución temporal de los coeficientes de arrastre ($C_D$) y sustentación ($C_L$) mediante la función \texttt{forceCoeffsIncompressible} de OpenFOAM, que integra las distribuciones de presión y esfuerzos viscosos sobre la superficie del cilindro.
+
+Las Figs.~\ref{fig:Cd_vs_tiempo_ej7} y \ref{fig:Cl_vs_tiempo_ej7} muestran la evolución temporal completa de ambos coeficientes desde el inicio de la simulación hasta $t = 50$ s.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Ejercicio7/Cd_vs_tiempo.png}
+    \caption{Evolución temporal del coeficiente de arrastre $C_D$. Se indican el valor medio simulado y el valor experimental de referencia según Roshko~\cite{roshko1954}.}
+    \label{fig:Cd_vs_tiempo_ej7}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Ejercicio7/Cl_vs_tiempo.png}
+    \caption{Evolución temporal del coeficiente de sustentación $C_L$, mostrando las oscilaciones periódicas características del desprendimiento de vórtices.}
+    \label{fig:Cl_vs_tiempo_ej7}
+\end{figure}
+
+\textbf{Análisis del coeficiente de arrastre:}
+
+El coeficiente de arrastre presenta un transitorio inicial (aproximadamente $t < 20$ s) durante el cual se establece el patrón de desprendimiento de vórtices. Una vez alcanzado el régimen cuasi-estacionario, $C_D$ oscila alrededor de un valor medio:
+\begin{equation}
+    \bar{C}_D = 1.30 \quad \text{(valor medio simulado)}
+\end{equation}
+
+Las oscilaciones de $C_D$ tienen una amplitud pequeña ($\Delta C_D \approx 0.05$) y ocurren con el doble de la frecuencia del desprendimiento de vórtices. Esto se debe a que cada vez que se desprende un vórtice (ya sea del lado superior o inferior), se produce una perturbación en la presión de base del cilindro.
+
+\textbf{Comparación con valores experimentales:}
+
+Los datos experimentales de Roshko~\cite{roshko1954} para cilindros circulares en el rango $Re = 500-600$ indican un coeficiente de arrastre en el rango:
+\begin{equation}
+    C_D^{\text{exp}} \approx 1.0 - 1.2 \quad \text{\cite{roshko1954}}
+\end{equation}
+
+El valor obtenido en la simulación ($\bar{C}_D = 1.30$) presenta una sobreestimación del 8-30\% respecto a los valores experimentales. Esta discrepancia puede atribuirse a:
+\begin{itemize}
+    \item \textbf{Limitaciones del modelo RANS:} Los modelos RANS con promediado de Reynolds tienden a sobreestimar la disipación turbulenta en la estela, resultando en una región de baja presión más extensa en la base del cilindro.
+    \item \textbf{Resolución de la malla:} Aunque la malla es adecuada para capturar el fenómeno global, una mayor refinación cerca de la superficie podría mejorar la predicción de la capa límite y, por tanto, del punto de separación.
+    \item \textbf{Bidimensionalidad:} Las simulaciones 2D no capturan los efectos tridimensionales presentes en el flujo real, los cuales pueden afectar el arrastre.
+\end{itemize}
+
+No obstante, el orden de magnitud es correcto y las oscilaciones temporales son coherentes con el fenómeno físico esperado.
+
+\textbf{Análisis del coeficiente de sustentación:}
+
+El coeficiente de sustentación oscila periódicamente alrededor de cero, como se espera para un cilindro en flujo cruzado simétrico:
+\begin{equation}
+    \bar{C}_L \approx 0 \quad \text{(valor medio)}
+\end{equation}
+
+La amplitud de las oscilaciones es aproximadamente $C_L \approx \pm 0.35$, reflejando la alternancia del desprendimiento de vórtices entre los lados superior e inferior del cilindro. La Fig.~\ref{fig:Cd_Cl_detalle_ej7} muestra un detalle de las oscilaciones durante los últimos 10 segundos de simulación.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Ejercicio7/Cd_Cl_detalle.png}
+    \caption{Detalle de las oscilaciones de $C_D$ y $C_L$ durante los últimos 10 segundos de simulación, evidenciando el carácter periódico del desprendimiento de vórtices.}
+    \label{fig:Cd_Cl_detalle_ej7}
+\end{figure}
+
+\subsection{Número de Strouhal}
+
+El número de Strouhal es un parámetro adimensional que caracteriza la frecuencia del desprendimiento de vórtices:
+\begin{equation}
+    St = \frac{f \cdot D}{U_\infty}
+\end{equation}
+donde $f$ es la frecuencia dominante de las oscilaciones.
+
+Para determinar $f$, se realizó un análisis espectral mediante la transformada rápida de Fourier (FFT) de la señal de $C_L(t)$ en el régimen cuasi-estacionario ($t > 20$ s). Previamente, se interpoló la señal a un muestreo uniforme de $\Delta t = 0.01$ s para aplicar correctamente el algoritmo FFT.
+
+La Fig.~\ref{fig:strouhal_espectro_ej7} muestra el espectro de amplitud de $C_L$.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Ejercicio7/Strouhal_espectro.png}
+    \caption{Espectro de frecuencia del coeficiente de sustentación $C_L$. El pico dominante corresponde a la frecuencia de desprendimiento de vórtices.}
+    \label{fig:strouhal_espectro_ej7}
+\end{figure}
+
+Del análisis espectral se obtiene:
+\begin{equation}
+    f_{\text{dominante}} = 0.167 \text{ Hz}
+\end{equation}
+
+Por lo tanto, el número de Strouhal simulado es:
+\begin{equation}
+    St = \frac{f \cdot D}{U_\infty} = \frac{0.167 \times 1.0}{1.0} = 0.167
+\end{equation}
+
+\textbf{Comparación con valores experimentales:}
+
+Los experimentos clásicos de Roshko~\cite{roshko1954} para cilindros circulares en el régimen subcrítico ($300 < Re < 2 \times 10^5$) determinaron un número de Strouhal prácticamente constante:
+\begin{equation}
+    St^{\text{exp}} \approx 0.20 - 0.21 \quad \text{\cite{roshko1954,williamson1996vortex}}
+\end{equation}
+
+El valor obtenido en la simulación presenta una desviación del 20\% respecto al valor experimental. Esta diferencia puede explicarse por:
+\begin{itemize}
+    \item \textbf{Limitaciones del modelo URANS:} Los modelos RANS transitorios (URANS) \\
+    tienen dificultades inherentes para capturar con precisión la dinámica de estructuras coherentes como los vórtices de von Kármán. Los modelos RANS están diseñados para flujos estacionarios y su extensión a flujos transitorios introduce aproximaciones.
+
+    \item \textbf{Disipación numérica:} Los esquemas numéricos de primer y segundo orden introducen cierta disipación artificial que puede modificar la frecuencia de desprendimiento.
+
+    \item \textbf{Tamaño del dominio y condiciones de contorno:} Aunque el dominio es suficientemente grande, las condiciones de simetría en las fronteras laterales pueden afectar ligeramente la dinámica de la estela.
+\end{itemize}
+
+A pesar de la diferencia cuantitativa, la simulación captura correctamente el fenómeno físico de desprendimiento periódico de vórtices, y el orden de magnitud del número de Strouhal es razonable. Para obtener predicciones más precisas, sería necesario emplear simulaciones LES (\textit{Large Eddy Simulation}) o DNS (\textit{Direct Numerical Simulation}), que resuelven explícitamente las estructuras turbulentas.
+
+La Fig.~\ref{fig:comparacion_experimental_ej7} presenta una comparación gráfica entre los valores simulados y experimentales de $C_D$ y $St$.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.75\textwidth]{Ejercicio7/comparacion_experimental.png}
+    \caption{Comparación entre los valores simulados y experimentales del coeficiente de arrastre $C_D$ y el número de Strouhal $St$ según Roshko~\cite{roshko1954}.}
+    \label{fig:comparacion_experimental_ej7}
+\end{figure}
+
+\subsection{Comparación de campos instantáneos y promedios}
+
+En simulaciones transitorias como esta, es fundamental distinguir entre los \textbf{campos instantáneos} y los \textbf{campos promediados en el tiempo}. OpenFOAM calcula automáticamente los campos promediados mediante la función \texttt{fieldAverage}.
+
+\subsubsection{Campos instantáneos}
+
+Los campos instantáneos representan el estado del flujo en un momento específico de tiempo. Capturan toda la dinámica del desprendimiento de vórtices, incluyendo las estructuras coherentes individuales.
+
+La Fig.~\ref{fig:velocity_magnitude_ej7} muestra el campo instantáneo de magnitud de velocidad en $t = 50$ s.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Ejercicio7/velocity_magnitude_t50_v2.png}
+    \caption{Campo instantáneo de magnitud de velocidad en $t = 50$ s. Se observan claramente los vórtices alternados de la calle de von Kármán en la estela del cilindro.}
+    \label{fig:velocity_magnitude_ej7}
+\end{figure}
+
+\textbf{Características del campo instantáneo de velocidad:}
+\begin{itemize}
+    \item Se observan claramente las estructuras vorticales individuales desprendiéndose alternativamente de ambos lados del cilindro.
+    \item La estela presenta un patrón asimétrico con vórtices rotando en sentidos opuestos.
+    \item La región de baja velocidad en la estela se extiende varias decenas de diámetros aguas abajo.
+    \item El flujo muestra fluctuaciones espaciales significativas asociadas al desprendimiento.
+\end{itemize}
+
+La Fig.~\ref{fig:velocity_detalle_ej7} presenta un detalle del campo de velocidad cerca del cilindro, donde se aprecia el punto de separación de la capa límite.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.80\textwidth]{Ejercicio7/velocity_detalle_cilindro.png}
+    \caption{Detalle del campo instantáneo de velocidad en las proximidades del cilindro. Se aprecia la separación de la capa límite y el inicio de la formación de vórtices.}
+    \label{fig:velocity_detalle_ej7}
+\end{figure}
+
+La Fig.~\ref{fig:pressure_ej7} muestra el campo instantáneo de presión.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Ejercicio7/pressure_t50_v2.png}
+    \caption{Campo instantáneo de presión en $t = 50$ s. Se observa la zona de alta presión en el punto de estancamiento frontal y las zonas de baja presión en los núcleos de los vórtices desprendidos.}
+    \label{fig:pressure_ej7}
+\end{figure}
+
+\textbf{Características del campo instantáneo de presión:}
+\begin{itemize}
+    \item Alta presión en el punto de estancamiento frontal ($C_p \approx 1$).
+    \item Zonas de baja presión localizadas en los núcleos de los vórtices desprendidos (visibles como manchas azules oscuras en la estela).
+    \item Presión baja y casi constante en la región de recirculación inmediatamente detrás del cilindro.
+    \item Gradientes de presión significativos en las zonas de aceleración lateral del flujo.
+\end{itemize}
+
+La Fig.~\ref{fig:estela_detalle_ej7} muestra una secuencia del campo de velocidad en la estela, evidenciando el desprendimiento alternado.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Ejercicio7/velocity_estela_t50.png}
+    \caption{Detalle de la calle de von Kármán en la estela del cilindro. Se aprecia el patrón alternado de vórtices rotando en sentidos opuestos.}
+    \label{fig:estela_detalle_ej7}
+\end{figure}
+
+\subsubsection{Campos promediados en el tiempo}
+
+Los campos promediados representan el valor medio del flujo sobre un intervalo de tiempo suficientemente largo para eliminar las fluctuaciones periódicas. Se calculan como:
+\begin{equation}
+    \bar{\phi}(\mathbf{x}) = \frac{1}{T} \int_{t_0}^{t_0 + T} \phi(\mathbf{x}, t) \, dt
+\end{equation}
+donde $\phi$ puede ser velocidad, presión, u otra variable del flujo.
+
+\textbf{Características de los campos promediados:}
+\begin{itemize}
+    \item La estela promediada presenta simetría respecto al eje horizontal del cilindro, ya que los vórtices se desprenden con igual probabilidad de ambos lados.
+    \item No se observan estructuras vorticales individuales; la estela aparece como una región de velocidad reducida de forma suave y simétrica.
+    \item El coeficiente de sustentación promediado es $\bar{C}_L \approx 0$ debido a la simetría estadística.
+    \item La presión promediada en la base del cilindro es menor que en el flujo potencial, reflejando el arrastre de presión medio.
+\end{itemize}
+
+\subsubsection{Diferencias fundamentales entre campos instantáneos y promedios}
+
+\begin{enumerate}
+    \item \textbf{Estructura de la estela:}
+    \begin{itemize}
+        \item \textit{Instantáneo:} Vórtices discretos alternados claramente visibles.
+        \item \textit{Promedio:} Estela simétrica sin estructuras coherentes.
+    \end{itemize}
+
+    \item \textbf{Coeficiente de sustentación:}
+    \begin{itemize}
+        \item \textit{Instantáneo:} $C_L(t)$ oscila periódicamente entre $\pm 0.35$.
+        \item \textit{Promedio:} $\bar{C}_L \approx 0$ (cancelación por simetría).
+    \end{itemize}
+
+    \item \textbf{Campo de presión:}
+    \begin{itemize}
+        \item \textit{Instantáneo:} Núcleos de baja presión en vórtices individuales.
+        \item \textit{Promedio:} Zona de baja presión uniforme en la estela.
+    \end{itemize}
+
+    \item \textbf{Utilidad práctica:}
+    \begin{itemize}
+        \item \textit{Instantáneo:} Necesario para análisis espectral (cálculo de $St$) y para estudiar la dinámica de vórtices. Representa las cargas fluctuantes sobre estructuras.
+        \item \textit{Promedio:} Útil para validación con datos experimentales de túnel de viento (sondas de presión promediada) y para cálculo de cargas medias.
+    \end{itemize}
+
+    \item \textbf{Fluctuaciones turbulentas:}
+    \begin{itemize}
+        \item La desviación cuadrática media $u'_{\text{rms}} = \sqrt{\overline{(u - \bar{u})^2}}$ cuantifica la intensidad de las fluctuaciones. Es máxima en la región de separación y en la estela cercana, donde ocurre el desprendimiento de vórtices.
+    \end{itemize}
+\end{enumerate}
+
+Estas diferencias son fundamentales para entender el fenómeno de desprendimiento de vórtices: los campos instantáneos capturan la \textit{dinámica temporal} del flujo (esencial para estudiar vibraciones inducidas por vórtices), mientras que los promedios proporcionan información \textit{estadística} del comportamiento medio (útil para el diseño estructural basado en cargas promedio).
+
+%========================================
+\section{Conclusiones}
+%========================================
+
+La simulación transitoria del flujo turbulento alrededor de un cilindro circular mediante el modelo RANS $k$-$\omega$ SST en OpenFOAM ha permitido capturar el fenómeno de desprendimiento periódico de vórtices (calle de von Kármán) y caracterizar el flujo mediante diversos parámetros aerodinámicos. Las principales conclusiones son:
+
+\begin{enumerate}
+    \item \textbf{Distribución de $C_p$:} Se ha observado que la distribución del coeficiente de presión sobre el cilindro presenta un punto de estancamiento frontal con $C_p \approx 1$, presiones mínimas en los flancos laterales ($C_p \approx -2.5$), y una región de baja presión casi constante en la base ($C_p \approx -1.0$ a $-1.2$) debido a la separación del flujo. Las variaciones temporales reflejan el carácter transitorio del desprendimiento de vórtices.
+
+    \item \textbf{Coeficiente de arrastre:} El valor medio del coeficiente de arrastre obtenido es $\bar{C}_D = 1.30$, lo cual representa una sobreestimación del 8-30\% respecto a los valores experimentales de Roshko~\cite{roshko1954} ($C_D^{\text{exp}} \approx 1.0 - 1.2$). Esta discrepancia es atribuible a las limitaciones inherentes de los modelos URANS para capturar con precisión la dinámica de la estela turbulenta.
+
+    \item \textbf{Número de Strouhal:} El análisis espectral mediante FFT de la señal de $C_L(t)$ ha permitido determinar la frecuencia de desprendimiento $f = 0.167$ Hz, resultando en un número de Strouhal $St = 0.167$. Este valor presenta una desviación del 20\% respecto al valor experimental~\cite{roshko1954,williamson1996vortex} ($St^{\text{exp}} \approx 0.21$), lo cual es razonable considerando las limitaciones del modelo RANS transitorio.
+
+    \item \textbf{Modelo de turbulencia:} El modelo $k$-$\omega$ SST proporciona resultados cualitativamente correctos y cuantitativamente aceptables para este tipo de flujo. Sin embargo, para predicciones más precisas de la frecuencia de desprendimiento y las amplitudes de las fuerzas fluctuantes, se recomienda emplear simulaciones LES o DNS.
+
+    \item \textbf{Campos instantáneos vs promedios:} Se han identificado diferencias fundamentales entre ambos tipos de campos. Los instantáneos capturan la dinámica del desprendimiento de vórtices (esencial para el cálculo del número de Strouhal y el estudio de VIV), mientras que los promedios proporcionan información estadística útil para comparación con experimentos y cálculo de cargas medias.
+\end{enumerate}
+
+En resumen, este ejercicio ha permitido aplicar de manera integral los conocimientos adquiridos durante el curso para estudiar un problema clásico de aerodinámica externa con relevancia práctica en ingeniería.

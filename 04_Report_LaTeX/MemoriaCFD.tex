@@ -1,0 +1,257 @@
+%%% Memoria CFD - Métodos Numéricos en Mecánica de Fluidos
+%%% Universidad de León - Máster en Ingeniería Aeronáutica
+%%% Autor: Miguel Rosa
+
+% Tipo de documento:
+\documentclass[12pt,a4paper,onecolumn,oneside]{report}
+\newcommand{\mychapter}[2]{
+	\setcounter{chapter}{#1}
+	\setcounter{section}{0}
+	\chapter*{#2}
+	\addcontentsline{toc}{chapter}{#2}
+}
+
+% Opcional: Tamaño personalizado para los márgenes:
+\usepackage[a4paper, top=3cm, bottom=3cm, left=3cm, right=3cm]{geometry}
+
+\usepackage[utf8]{inputenc} % Codificación UTF-8.
+\usepackage[T1]{fontenc}    % Para usar caracteres con tilde.
+\usepackage[spanish,es-tabla]{babel} % Escritura en castellano.
+\usepackage{graphicx} % Paquete de imágenes, para introducir figuras.
+\usepackage{grffile} % Mejor manejo de archivos gráficos
+\DeclareGraphicsExtensions{.pdf,.png,.jpg}
+\usepackage[usenames,dvipsnames]{color} % Texto en colores.
+\usepackage{xcolor}   % Extra colors.
+\usepackage{url}      % Para escritura de URLs.
+\usepackage[breaklinks]{hyperref} % Hiperreferencias.
+% Evita warning de rerunfilecheck al generar el índice de bookmarks
+\usepackage{bookmark}
+\usepackage{amsmath,amssymb} % Para los símbolos matemáticos.
+\usepackage{cite}     % Para las citas de referencias (crea el superíndice).
+\usepackage{listings} % Para coloreado de código fuente.
+\usepackage{verbatim} % Para textos tipo consola y otros formatos.
+\usepackage{fancyvrb} % Más opciones de verbatim.
+\usepackage{parskip}  % OPCIONAL: Separa los párrafos con una línea en blanco.
+\setlength{\parindent}{15pt} % Sangría de párrafos estándar (15 puntos). Necesario incluirla si se usa el paquete 'parskip'.
+\usepackage[export]{adjustbox}
+\usepackage{caption}  % Para personalizar los pies de foto.
+
+% Opciones del paquete caption para los pies de imágenes y tablas:
+\captionsetup{figurename=Figura, tablename=Tabla, labelsep=colon, labelfont=bf, font=small, justification=centering}
+
+% Para el control de líneas viudas y huérfanas (líneas sueltas en páginas nuevas):
+%\usepackage[all]{nowidow} % Paquete no disponible, comentado
+
+%\usepackage[nottoc]{tocbibind}    % Incluye el apartado "Referencias" en el índice. Paquete no disponible, comentado
+%\def\spanishrefname{Bibliografía} % Para que ponga "Bibliografía" en lugar de "Referencias". SÓLO se aplica a formato "article". En "report" ya pone "Bibliografía".
+
+\usepackage{fancyhdr}
+% Permitir la opción [H] en figuras y usar guiones bajos en texto
+\usepackage{float}        % so \begin{figure}[H] works
+\usepackage{underscore}   % permite _ en texto (rutas y nombres de archivos)
+
+\setlength{\unitlength}{1 cm} % Unidad de trabajo de medidas.
+\setlength{\headheight}{14pt} % Evita warning de fancyhdr: headheight demasiado pequeño
+
+\renewcommand*{\baselinestretch}{1.25} % Altura del INTERLINEADO.
+\renewcommand{\shorthandsspanish}{}    % Para que corte las palabras según el castellano.
+
+% Propiedades para el PDF generado (METADATOS):
+\newcommand{\authorNames}{Miguel Rosa}
+\newcommand{\pdftitle}{Métodos Numéricos en Mecánica de Fluidos - Memoria CFD}
+\hypersetup{
+  pdftitle={\pdftitle},% Título
+  pdfauthor={\authorNames},% Autor
+  pdfsubject={\pdftitle \ - \authorNames},% Asunto
+% pdfkeywords={CFD, Métodos Numéricos, OpenFOAM, MATLAB}%
+}
+
+% Para la representación de código fuente:
+% Para MATLAB:
+\lstset{
+	language=Matlab,
+	basicstyle=\scriptsize,
+	frame=single,
+	numbers=left,
+	numberstyle=\scriptsize,
+	stepnumber=1,
+	numbersep=9pt,
+	backgroundcolor=\color{White},
+	showspaces=false,
+	showstringspaces=false,
+	showtabs=false,
+	tabsize=4,
+	captionpos=b,
+	breaklines=true,
+	keywordstyle=\color{blue}\bfseries,
+	stringstyle=\color{orange}\bfseries,
+	commentstyle=\color{gray}\bfseries
+}
+
+% Subcaptions para subfiguras
+\usepackage{subcaption}
+
+% Comando personalizado para incluir imágenes con placeholder si no existen
+\usepackage{ifthen}
+\newcommand{\safeincludegraphics}[2][]{%
+    \ifthenelse{\equal{#2}{}}{%
+        \fbox{\parbox[c][2cm][c]{4cm}{\centering\textbf{IMAGEN NO ESPECIFICADA}}}%
+    }{%
+        \IfFileExists{#2}{%
+            \includegraphics[#1]{#2}%
+        }{%
+            \fbox{\parbox[c][2cm][c]{4cm}{\centering\textbf{IMAGEN FALTANTE:\\#2}}}%
+        }%
+    }%
+}
+
+% Rutas de gráficos
+\graphicspath{{figuras_plantilla/}{../01_Matlab_Exercises/figures/}{../02_OpenFOAM_FVM/figures/}{../03_XFLR5/figures/}}
+
+\usepackage{fancyhdr} % Para el tamaño y estilo de los encabezados.
+
+\fancypagestyle{headings}{% Redefine el estilo "headings".
+	\fancyhf{} % Clear all header and footer fields.
+	\lhead{\small \it Memoria de Ejercicios - Dinámica de Fluidos Computacional} % Título a la izquierda. Tamaño "small".
+	\rhead{\small \it Página \thepage}      % Nº de página a la derecha. Tamaño "small".
+	\renewcommand{\headrulewidth}{1pt}
+}
+
+% Ajustes para división manual de palabras:
+\hyphenation{MATLAB} % Impide que la palabra MATLAB sea dividida al acabar una línea.
+\hyphenation{OpenFOAM}
+%\hyphenation{XFLR5}
+%%%%%% INICIO DEL DOCUMENTO: %%%%%%
+
+\begin{document}
+
+% Página de TÍTULO (portada):
+\begin{titlepage}
+
+\begin{picture}(0,0)
+\put(-2,-1){\includegraphics[height=3cm]{figuras_plantilla/ule.jpg}}
+\put(13,-1){\includegraphics[height=3cm]{figuras_plantilla/escudo-ingenierias.png}}
+\end{picture}
+
+\begin{center}
+\textbf{{\Large \bf Escuela de Ingenierías I.I.}}\\[2.5cm]  % Salto de línea dejando 1.2cm.
+\textbf{{\Large \bf Industrial, Informática y Aeroespacial}}\\[2.5cm]
+{\Large \bf MÁSTER EN INGENIERÍA AERONÁUTICA}\\[2.5cm]
+{\Large \bf Dinámica de Fluidos Computacional}\\[2.5cm]
+{\Large \textbf{Memoria de Ejercicios}}\\[1.5cm]
+%{\Large \textbf{Memoria CFD}}\\[1.5cm]
+\end{center}
+
+\begin{flushright}
+{\bf Autor: Miguel Rosa Zazo }\\[0.5cm]
+{\bf DNI: 09098357V}\\[0.5cm]
+{\bf Fecha: Diciembre 2025}\\[1.4cm]
+\end{flushright}
+
+\end{titlepage}
+
+
+% Página de FIRMAS:
+\newpage
+
+
+
+
+
+\newpage
+\pagestyle{plain}
+
+\renewcommand{\thepage}{\roman{page}}
+\setcounter{page}{1} % Esta página es la 1.
+
+
+% Página con el ÍNDICE GENERAL
+\tableofcontents
+
+% Página con el ÍNDICE DE FIGURAS
+\listoffigures
+
+% Página con el ÍNDICE DE TABLAS
+\listoftables
+
+%========================================
+% CAPITULO 0: INTRODUCCION Y OBJETIVOS
+%========================================
+\newpage
+\renewcommand{\thepage}{\arabic{page}}
+\setcounter{page}{1}
+\pagestyle{headings}
+
+\input{sections/00_introduccion}
+
+%========================================
+% PARTE I: METODOS DE PANEL (MATLAB)
+%========================================
+\part{Métodos de Panel}
+\label{part:metodos_panel}
+
+% Introduccion a la Parte I
+\chapter*{Introducción a los Métodos de Panel}
+\addcontentsline{toc}{chapter}{Introducción a los Métodos de Panel}
+
+Los métodos de panel constituyen una familia de técnicas numéricas para la resolución de flujos potenciales alrededor de cuerpos aerodinámicos. Estos métodos discretizan la superficie del cuerpo en paneles sobre los que se distribuyen singularidades (fuentes, sumideros, vórtices o dobletes), permitiendo calcular el campo de velocidades y presiones sin necesidad de mallar todo el dominio fluido.
+
+En esta primera parte se implementan tres métodos clásicos:
+\begin{itemize}
+    \item \textbf{Método de Hess-Smith} (Capítulo~\ref{chap:ejercicio1}): Para el análisis de perfiles aerodinámicos bidimensionales.
+    \item \textbf{Método de Multhopp} (Capítulo~\ref{chap:ejercicio2}): Para el análisis de alas mediante la teoría de la línea sustentadora.
+    \item \textbf{Método Vortex Lattice} (Capítulo~\ref{chap:ejercicio3}): Para el análisis tridimensional de configuraciones alares.
+\end{itemize}
+
+\input{sections/01_ejercicio1}
+\input{sections/02_ejercicio2}
+\input{sections/03_ejercicio3}
+
+%========================================
+% PARTE II: METODO DE VOLUMENES FINITOS (OPENFOAM)
+%========================================
+\part{Método de Volúmenes Finitos}
+\label{part:fvm}
+
+% Introduccion a la Parte II
+\chapter*{Introducción al Método de Volúmenes Finitos}
+\addcontentsline{toc}{chapter}{Introducción al Método de Volúmenes Finitos}
+
+El método de volúmenes finitos (FVM) es la técnica de discretización más utilizada en CFD comercial e industrial. A diferencia de los métodos de panel, el FVM resuelve las ecuaciones de Navier-Stokes completas (o sus aproximaciones RANS) en todo el dominio fluido, permitiendo simular efectos viscosos, turbulencia, compresibilidad y transferencia de calor.
+
+En esta segunda parte se emplean los solvers de \textit{OpenFOAM} para estudiar:
+\begin{itemize}
+    \item \textbf{Esquemas numéricos} (Capítulo~\ref{chap:ejercicio4}): Análisis de esquemas de discretización espacial y temporal mediante el problema del tubo de shock de Sod.
+    \item \textbf{Funciones de pared} (Capítulo~\ref{chap:ejercicio5}): Modelado de la capa límite turbulenta en flujo de Couette plano.
+    \item \textbf{Convergencia de malla} (Capítulo~\ref{chap:ejercicio6}): Estudio de independencia de malla mediante extrapolación de Richardson y GCI.
+    \item \textbf{Flujo transitorio turbulento} (Capítulo~\ref{chap:ejercicio7}): Simulación del desprendimiento de vórtices de von Kármán.
+\end{itemize}
+
+\input{sections/04_ejercicio4}
+\input{sections/05_ejercicio5}
+\input{sections/06_ejercicio6}
+\input{sections/07_ejercicio7}
+
+%========================================
+% HARDWARE Y SOFTWARE (integrado en la Introducción)
+%========================================
+% El contenido de hardware y software se ha integrado en la sección de introducción.
+%\input{sections/08_hardware_software}
+
+%========================================
+% BIBLIOGRAFIA
+%========================================
+\renewcommand\bibname{Referencias}
+% Incluir todas las entradas del .bib aunque no se citen explícitamente
+\nocite{*}
+\bibliographystyle{splncs04}
+\bibliography{references}
+
+%========================================
+% ANEXOS
+%========================================
+\appendix
+% El anexo de código se comenta temporalmente; el código completo está en el repositorio.
+%\input{sections/09_anexos_codigo}
+
+\end{document}

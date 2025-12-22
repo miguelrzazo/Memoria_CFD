@@ -1,0 +1,99 @@
+%========================================
+% CAPITULO 8: HARDWARE Y SOFTWARE
+%========================================
+\chapter{Hardware y Software}
+\label{chap:hardware_software}
+
+\section{Especificaciones del hardware}
+
+Los calculos y simulaciones presentados en esta memoria se han realizado en el siguiente equipo:
+
+\begin{itemize}
+    \item \textbf{Equipo:} MacBook Pro (2020)
+    \item \textbf{Procesador:} Apple M1 (arquitectura ARM64)
+    \item \textbf{Memoria RAM:} 16 GB
+    \item \textbf{Sistema operativo:} macOS Sonoma
+\end{itemize}
+
+\section{Software utilizado}
+
+\subsection{MATLAB}
+
+\begin{itemize}
+    \item \textbf{Version:} MATLAB R2025a
+    \item \textbf{Uso:} Implementacion de metodos numericos (Ejercicios 1-3), post-procesamiento de datos de OpenFOAM y generacion de graficas.
+\end{itemize}
+
+\subsection{OpenFOAM}
+
+\begin{itemize}
+    \item \textbf{Version:} OpenFOAM 13
+    \item \textbf{Imagen Docker:} \texttt{microfluidica/openfoam:13} (ARM64)
+    \item \textbf{Uso:} Simulaciones CFD mediante el metodo de volumenes finitos (Ejercicios 4-7).
+\end{itemize}
+
+\subsection{ParaView}
+
+\begin{itemize}
+    \item \textbf{Version:} ParaView 5.12
+    \item \textbf{Uso:} Visualizacion y post-procesamiento de resultados de OpenFOAM.
+\end{itemize}
+
+\subsection{XFLR5}
+
+\begin{itemize}
+    \item \textbf{Version:} XFLR5 v6.61
+    \item \textbf{Uso:} Validacion de resultados del metodo de paneles (Ejercicio 2).
+\end{itemize}
+
+\subsection{LaTeX}
+
+\begin{itemize}
+    \item \textbf{Distribucion:} MacTeX 2024
+    \item \textbf{Uso:} Redaccion de la presente memoria.
+\end{itemize}
+
+\subsection{Control de versiones}
+
+\begin{itemize}
+    \item \textbf{Git:} Control de versiones del codigo y documentacion.
+    \item \textbf{GitHub:} Repositorio remoto para backup y colaboracion.
+    \item \textbf{VS Code:} Editor de codigo con extension de GitHub Copilot.
+\end{itemize}
+
+\section{Ejecucion de OpenFOAM en Docker sobre macOS ARM}
+
+Dado que OpenFOAM no dispone de una version nativa para macOS con procesadores Apple Silicon (ARM64), se ha utilizado Docker para ejecutar las simulaciones. A continuacion se describe el procedimiento seguido:
+
+\subsection{Configuracion del entorno Docker}
+
+La imagen Docker utilizada es \texttt{microfluidica/openfoam:13}, que esta compilada para arquitectura ARM64 y es compatible con procesadores Apple M1/M2/M3.
+
+\subsection{Comandos de ejecucion}
+
+Para ejecutar un caso de OpenFOAM, se utiliza el siguiente esquema de comandos:
+
+\begin{verbatim}
+# Ajustar permisos del caso
+sudo chown -R 1000:1000 /ruta/al/caso
+
+# Ejecutar caso completo
+docker run --rm -u 1000:1000 \
+   -v "$(pwd)":/home/openfoam/work \
+   microfluidica/openfoam:13 \
+   bash -lc "cd /home/openfoam/work/caso && ./Allrun"
+
+# Exportar VTK para visualizacion
+docker run --rm -u 1000:1000 \
+   -v "$(pwd)":/home/openfoam/work \
+   microfluidica/openfoam:13 \
+   bash -lc "cd /home/openfoam/work/caso && foamToVTK -latestTime"
+\end{verbatim}
+
+\subsection{Notas importantes}
+
+\begin{itemize}
+    \item El flag \texttt{-u 1000:1000} es necesario para evitar problemas de permisos con las macros \texttt{\#calc} de OpenFOAM.
+    \item Los archivos VTK exportados se visualizan posteriormente con ParaView instalado de forma nativa en macOS.
+    \item El post-procesamiento numerico (graficas de residuos, coeficientes, etc.) se realiza con scripts de MATLAB o Python ejecutados localmente.
+\end{itemize}

@@ -1,0 +1,377 @@
+%========================================
+% CAPITULO 5: TECNICAS DE MODELADO DE FLUJO EN PAREDES
+%========================================
+\chapter{Técnicas de modelado de flujo en paredes}
+\label{chap:ejercicio5}
+
+%========================================
+\section{Introducción}
+%========================================
+
+El modelado del flujo en las inmediaciones de una pared sólida constituye uno de los desafíos fundamentales en la simulación CFD de flujos turbulentos. En la capa límite turbulenta, las escalas de longitud y tiempo varían drásticamente a medida que nos aproximamos a la superficie, desde las grandes estructuras turbulentas en la región exterior hasta las escalas viscosas dominantes en la subcapa próxima a la pared~\cite{versteeg2007introduction}.
+
+Esta variación de escalas tiene implicaciones directas en los requisitos de mallado: resolver directamente todas las estructuras turbulentas hasta la pared requiere celdas extremadamente finas, con la primera celda ubicada a una distancia de pared adimensional $y^+ \approx 1$. Esta estrategia, denominada \textit{Low-Reynolds}, proporciona resultados precisos pero implica un coste computacional elevado~\cite{pope2000turbulent}.
+
+Como alternativa, las funciones de pared (\textit{wall functions}) permiten modelar el comportamiento del flujo en la región cercana a la pared sin necesidad de resolverla explícitamente. Esta estrategia \textit{High-Reynolds} coloca la primera celda en la capa logarítmica ($y^+ \approx 30-300$), reduciendo significativamente el número de celdas necesarias~\cite{wilcox1998turbulence}.
+
+%========================================
+\section{Objetivo}
+%========================================
+
+El objetivo de este ejercicio es analizar el efecto que tienen sobre la solución las diferentes técnicas de modelado del flujo con viscosidad en las inmediaciones de una pared, así como el efecto del mallado en la solución de los problemas de volúmenes finitos.
+
+Específicamente, se pretende:
+\begin{itemize}
+    \item Estimar el valor de los esfuerzos viscosos en la pared y utilizarlo para dimensionar las primeras celdas de la malla.
+    \item Comparar las estrategias Low-Reynolds y High-Reynolds para un flujo de Couette turbulento.
+    \item Dibujar la ley de pared obtenida en cada simulación, comparándola con la solución analítica en unidades de pared ($y^+$ vs $U^+$).
+    \item Evaluar el compromiso entre precisión y coste computacional de cada estrategia.
+\end{itemize}
+
+%========================================
+\section{Fundamento teórico}
+%========================================
+
+\subsection{Flujo de Couette plano}
+
+El flujo de Couette plano consiste en el movimiento de un fluido viscoso entre dos placas paralelas infinitas, donde una permanece fija mientras la otra se desplaza con velocidad constante $U_{\text{wall}}$. Este flujo es de gran interés teórico porque admite soluciones analíticas y permite estudiar de forma aislada los fenómenos de capa límite sin efectos de gradientes de presión~\cite{pope2000turbulent}.
+
+En régimen laminar, el perfil de velocidad es lineal:
+\begin{equation}
+    U(y) = U_{\text{wall}} \frac{y}{H}
+    \label{eq:couette_laminar}
+\end{equation}
+donde $H$ es la altura del canal.
+
+En régimen turbulento, el perfil se desvía significativamente de la distribución lineal debido a los efectos de las tensiones de Reynolds, presentando mayores gradientes cerca de las paredes.
+
+\subsection{Estructura de la capa límite turbulenta}
+
+La capa límite turbulenta se caracteriza mediante variables adimensionales basadas en la velocidad de fricción $u_\tau$:
+\begin{equation}
+    u_\tau = \sqrt{\frac{\tau_w}{\rho}}
+    \label{eq:u_tau}
+\end{equation}
+donde $\tau_w$ es el esfuerzo cortante en la pared.
+
+Las coordenadas adimensionales de pared se definen como:
+\begin{equation}
+    y^+ = \frac{y \cdot u_\tau}{\nu}, \qquad U^+ = \frac{U}{u_\tau}
+    \label{eq:wall_units}
+\end{equation}
+
+La estructura de la capa límite turbulenta se divide en regiones bien diferenciadas~\cite{versteeg2007introduction}:
+
+\textbf{Subcapa viscosa} ($y^+ < 5$): Región dominada por efectos viscosos donde el perfil es lineal:
+\begin{equation}
+    U^+ = y^+
+    \label{eq:subcapa_viscosa}
+\end{equation}
+
+\textbf{Capa de amortiguamiento o buffer} ($5 < y^+ < 30$): Región de transición donde coexisten efectos viscosos y turbulentos.
+
+\textbf{Capa logarítmica} ($y^+ > 30$): Región donde domina la turbulencia y el perfil sigue la ley logarítmica:
+\begin{equation}
+    U^+ = \frac{1}{\kappa} \ln(y^+) + B
+    \label{eq:log_law}
+\end{equation}
+donde $\kappa \approx 0.41$ es la constante de von Kármán y $B \approx 5.0$ es una constante empírica.
+
+\textbf{Capa externa} ($y^+ > 300$): Región exterior donde los efectos de pared son despreciables.
+
+\subsection{Estimación del esfuerzo en pared}
+
+Para flujo sobre placa plana turbulenta, el coeficiente de fricción puede estimarse mediante la correlación de Prandtl:
+\begin{equation}
+    C_f = 0.074 \cdot Re^{-0.2}
+    \label{eq:cf_prandtl}
+\end{equation}
+
+El esfuerzo cortante en la pared se calcula entonces como:
+\begin{equation}
+    \tau_w = \frac{1}{2} \rho U_{\text{wall}}^2 C_f
+    \label{eq:tau_w}
+\end{equation}
+
+Esta estimación permite dimensionar la primera celda de la malla según la estrategia de modelado elegida:
+\begin{itemize}
+    \item \textbf{Low-Reynolds} ($y^+ \approx 1$): $y_1 = \dfrac{\nu}{u_\tau}$
+    \item \textbf{High-Reynolds} ($y^+ \approx 30$): $y_1 = \dfrac{30 \nu}{u_\tau}$
+\end{itemize}
+
+\subsection{Modelo de turbulencia}
+
+Se empleó el modelo $k$-$\varepsilon$ de Launder-Sharma~\cite{launder1974application,versteeg2007introduction}, un modelo de dos ecuaciones que resuelve ecuaciones de transporte para la energía cinética turbulenta $k$ y su tasa de disipación $\varepsilon$. Este modelo incluye funciones de amortiguamiento que permiten su uso tanto en la versión Low-Reynolds (resolviendo hasta la pared) como con funciones de pared.
+
+%========================================
+\section{Condiciones de simulación}
+%========================================
+
+\subsection{Parámetros del problema}
+
+El número de Reynolds se calculó según la última cifra del DNI del alumno:
+\begin{equation}
+    Re = 5 \times 10^5 + l_D \times 5000 = 500\,000 + 7 \times 5000 = 535\,000
+\end{equation}
+donde $l_D = 7$ es la última cifra del DNI.
+
+Los parámetros dimensionales del problema se definieron como:
+\begin{itemize}
+    \item Altura del canal: $H = 0.1$ m
+    \item Velocidad de la pared móvil: $U_{\text{wall}} = 10$ m/s
+    \item Viscosidad cinemática: $\nu = \dfrac{U_{\text{wall}} \cdot H}{Re} = \dfrac{10 \times 0.1}{535\,000} = 1.869 \times 10^{-6}$ m$^2$/s
+\end{itemize}
+
+\subsection{Estimación de esfuerzos y dimensionado de malla}
+
+Aplicando la correlación de Prandtl (Ec.~\ref{eq:cf_prandtl}):
+\begin{align}
+    C_f &= 0.074 \times (535\,000)^{-0.2} = 5.29 \times 10^{-3} \\
+    \tau_w &= \frac{1}{2} \times 1.0 \times 10^2 \times 5.29 \times 10^{-3} = 0.265 \text{ Pa} \\
+    u_\tau &= \sqrt{0.265} = 0.514 \text{ m/s}
+\end{align}
+
+El dimensionado de la primera celda resulta:
+\begin{itemize}
+    \item Low-Reynolds ($y^+ = 1$): $y_1 = \dfrac{1.869 \times 10^{-6}}{0.514} = 3.6 \times 10^{-6}$ m $= 3.6$ $\mu$m
+    \item High-Reynolds ($y^+ = 30$): $y_1 = \dfrac{30 \times 1.869 \times 10^{-6}}{0.514} = 1.1 \times 10^{-4}$ m $= 110$ $\mu$m
+\end{itemize}
+
+\subsection{Configuración de mallas}
+
+Se generaron dos mallas diferentes mediante \texttt{blockMesh}:
+
+\textbf{Malla Low-Reynolds:}
+\begin{itemize}
+    \item Celdas: $50 \times 500 \times 1$ (25\,000 celdas totales)
+    \item Grading en $y$: refinamiento progresivo hacia las paredes
+    \item Primera celda: $y^+ \approx 1$
+\end{itemize}
+
+\textbf{Malla High-Reynolds:}
+\begin{itemize}
+    \item Celdas: $20 \times 50 \times 1$ (1\,000 celdas totales)
+    \item Distribución uniforme
+    \item Primera celda: $y^+ \approx 30$
+\end{itemize}
+
+La Fig.~\ref{fig:mallas_ej5} muestra un detalle de ambas mallas cerca de la pared inferior.
+
+\begin{figure}[h!]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Ejercicio5/malla_detalle_lowRe.png}
+        \caption*{(a) Malla Low-Reynolds}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Ejercicio5/malla_detalle_highRe.png}
+        \caption*{(b) Malla High-Reynolds}
+    \end{minipage}
+    \caption{Detalle de las mallas computacionales cerca de la pared inferior: (a) estrategia Low-Reynolds con refinamiento progresivo, (b) estrategia High-Reynolds con distribución uniforme.}
+    \label{fig:mallas_ej5}
+\end{figure}
+
+\subsection{Condiciones de contorno}
+
+\textbf{Pared superior (móvil):}
+\begin{itemize}
+    \item Velocidad: $\mathbf{U} = (10, 0, 0)$ m/s (no deslizamiento)
+    \item Presión: gradiente nulo
+    \item Variables turbulentas: según estrategia (fixedValue para Low-Re, wallFunction para High-Re)
+\end{itemize}
+
+\textbf{Pared inferior (fija):}
+\begin{itemize}
+    \item Velocidad: $\mathbf{U} = (0, 0, 0)$ m/s (no deslizamiento)
+    \item Presión: gradiente nulo
+    \item Variables turbulentas: según estrategia
+\end{itemize}
+
+\textbf{Dirección del flujo ($x$):}
+\begin{itemize}
+    \item Condiciones periódicas (cyclic)
+\end{itemize}
+
+\textbf{Dirección $z$:}
+\begin{itemize}
+    \item Tipo empty (simulación bidimensional)
+\end{itemize}
+
+\subsection{Configuración del solver}
+
+Se utilizó el solver \texttt{incompressibleFluid} de OpenFOAM con algoritmo SIMPLE:
+\begin{itemize}
+    \item Tiempo de simulación: $t_{\text{final}} = 4000$ s (estado estacionario)
+    \item Paso temporal: $\Delta t = 1$ s
+    \item Criterio de convergencia: residuos $< 10^{-4}$
+\end{itemize}
+
+%========================================
+\section{Resultados}
+%========================================
+
+\subsection{Campo de velocidad}
+
+La Fig.~\ref{fig:campos_U_ej5} muestra el campo de velocidad obtenido para ambas configuraciones. Se observa el desarrollo del perfil de velocidad característico del flujo de Couette, con gradientes pronunciados cerca de las paredes.
+
+\begin{figure}[h!]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Ejercicio5/U_lowRe.png}
+        \caption*{(a) Low-Reynolds}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Ejercicio5/U_highRe.png}
+        \caption*{(b) High-Reynolds}
+    \end{minipage}
+    \caption{Campo de magnitud de velocidad: (a) configuración Low-Reynolds, (b) configuración High-Reynolds.}
+    \label{fig:campos_U_ej5}
+\end{figure}
+
+\subsection{Perfil de velocidad dimensional}
+
+La Fig.~\ref{fig:perfil_velocidad_ej5} compara los perfiles de velocidad obtenidos con el perfil lineal laminar teórico. Ambas configuraciones predicen un perfil similar, con mayor gradiente cerca de las paredes y una región central más uniforme característica del flujo turbulento.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.75\textwidth]{Ejercicio5/perfil_velocidad.png}
+    \caption{Perfil de velocidad en el canal: comparación entre resultados CFD y solución laminar teórica.}
+    \label{fig:perfil_velocidad_ej5}
+\end{figure}
+
+\subsection{Ley de pared}
+
+La Fig.~\ref{fig:ley_pared_ej5} presenta la comparación de los perfiles de velocidad en unidades de pared ($U^+$ vs $y^+$) con las leyes teóricas. Se incluyen la ley lineal de la subcapa viscosa (Ec.~\ref{eq:subcapa_viscosa}) y la ley logarítmica (Ec.~\ref{eq:log_law}).
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Ejercicio5/ley_pared_comparacion.png}
+    \caption{Ley de pared: comparación de los perfiles simulados con las leyes teóricas de la subcapa viscosa y la capa logarítmica. Las líneas verticales discontinuas indican los límites de las regiones ($y^+ = 5$ y $y^+ = 30$).}
+    \label{fig:ley_pared_ej5}
+\end{figure}
+
+\subsection{Campos turbulentos}
+
+Las Figs.~\ref{fig:campos_k_ej5} y \ref{fig:campos_nut_ej5} muestran la distribución de energía cinética turbulenta $k$ y viscosidad turbulenta $\nu_t$ para ambas configuraciones.
+
+\begin{figure}[h!]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Ejercicio5/k_lowRe.png}
+        \caption*{(a) Low-Reynolds}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Ejercicio5/k_highRe.png}
+        \caption*{(b) High-Reynolds}
+    \end{minipage}
+    \caption{Campo de energía cinética turbulenta $k$: (a) Low-Reynolds, (b) High-Reynolds.}
+    \label{fig:campos_k_ej5}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Ejercicio5/nut_lowRe.png}
+        \caption*{(a) Low-Reynolds}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Ejercicio5/nut_highRe.png}
+        \caption*{(b) High-Reynolds}
+    \end{minipage}
+    \caption{Campo de viscosidad turbulenta $\nu_t$: (a) Low-Reynolds, (b) High-Reynolds.}
+    \label{fig:campos_nut_ej5}
+\end{figure}
+
+\subsection{Comparación de estrategias}
+
+La Fig.~\ref{fig:comparacion_estrategias_ej5} resume las diferencias entre ambas estrategias en términos de requisitos de malla y coste computacional.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Ejercicio5/comparacion_estrategias.png}
+    \caption{Comparación de estrategias de modelado: requisitos de $y^+$ de la primera celda y número de celdas en dirección $y$.}
+    \label{fig:comparacion_estrategias_ej5}
+\end{figure}
+
+La Tabla~\ref{tab:comparacion_ej5} presenta un resumen cuantitativo de ambas configuraciones.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Comparación de las estrategias de modelado de pared.}
+    \label{tab:comparacion_ej5}
+    \begin{tabular}{lcc}
+        \hline
+        \textbf{Parámetro} & \textbf{Low-Reynolds} & \textbf{High-Reynolds} \\
+        \hline
+        Celdas totales & 25\,000 & 1\,000 \\
+        Celdas en $y$ & 500 & 50 \\
+        $y^+$ primera celda & $\approx 1$ & $\approx 30$ \\
+        Tipo BC ($k$) & fixedValue & kqRWallFunction \\
+        Tipo BC ($\nu_t$) & calculated & nutkWallFunction \\
+        Factor reducción & -- & $25\times$ \\
+        \hline
+    \end{tabular}
+\end{table}
+
+%========================================
+\section{Discusión}
+%========================================
+
+Los resultados obtenidos permiten analizar las ventajas y limitaciones de cada estrategia:
+
+\textbf{Estrategia Low-Reynolds:}
+\begin{itemize}
+    \item Resuelve explícitamente la subcapa viscosa, capturando con precisión el comportamiento del flujo cerca de la pared.
+    \item Requiere un mallado muy fino ($y^+ \approx 1$), lo que incrementa significativamente el número de celdas y el tiempo de cómputo.
+    \item Es más precisa para flujos con separación, recirculación o transferencia de calor en la pared.
+    \item Necesita modelos de turbulencia con funciones de amortiguamiento (como Launder-Sharma).
+\end{itemize}
+
+\textbf{Estrategia High-Reynolds:}
+\begin{itemize}
+    \item Utiliza funciones de pared para modelar el comportamiento en la región cercana a la pared.
+    \item Permite mallas más gruesas ($y^+ \approx 30-300$), reduciendo drásticamente el coste computacional.
+    \item Asume que el flujo sigue la ley logarítmica, lo cual es válido para flujos adheridos en equilibrio.
+    \item Puede perder precisión en flujos con separación, gradientes de presión adversos o transferencia de calor.
+\end{itemize}
+
+Para el caso del flujo de Couette turbulento estudiado, ambas estrategias producen resultados comparables en términos de perfil de velocidad global. Esto se debe a que:
+\begin{enumerate}
+    \item El flujo es simple y no presenta separación ni gradientes de presión.
+    \item El alto número de Reynolds ($Re = 535\,000$) garantiza una capa logarítmica bien desarrollada.
+    \item Las condiciones periódicas eliminan efectos de entrada/salida.
+\end{enumerate}
+
+La diferencia en coste computacional es sustancial: la malla High-Reynolds tiene 25 veces menos celdas que la Low-Reynolds, lo que se traduce en tiempos de simulación significativamente menores.
+
+%========================================
+\section{Conclusiones}
+%========================================
+
+El ejercicio ha permitido validar y comparar las técnicas de modelado de flujo en paredes disponibles en OpenFOAM:
+
+\begin{enumerate}
+    \item \textbf{Estimación de esfuerzos:} La correlación de Prandtl proporciona una estimación razonable de $u_\tau$ para el dimensionado inicial de la malla, obteniendo $u_\tau \approx 0.51$ m/s para $Re = 535\,000$.
+
+    \item \textbf{Ley de pared:} Los perfiles de velocidad simulados se ajustan satisfactoriamente a las leyes teóricas de la subcapa viscosa ($U^+ = y^+$) y la capa logarítmica ($U^+ = (1/\kappa)\ln(y^+) + B$).
+
+    \item \textbf{Comparación de estrategias:} Ambas estrategias (Low-Re y High-Re) producen resultados equivalentes para este flujo simple, pero con diferencias importantes en coste computacional (factor $25\times$ en número de celdas).
+
+    \item \textbf{Selección de estrategia:} Para flujos turbulentos adheridos de alto Reynolds sin fenómenos complejos en la pared, la estrategia High-Reynolds con funciones de pared ofrece un excelente compromiso entre precisión y eficiencia.
+
+    \item \textbf{Limitaciones:} Las funciones de pared asumen equilibrio local y ley logarítmica. Para flujos con separación, transferencia de calor o gradientes de presión adversos, se recomienda la estrategia Low-Reynolds.
+\end{enumerate}
+
+Este análisis es fundamental antes de abordar simulaciones más complejas, ya que la elección de la estrategia de modelado de pared tiene implicaciones directas en la precisión de los resultados y el coste computacional de la simulación.

@@ -1,0 +1,334 @@
+%========================================
+% CAPITULO 4: ESQUEMAS NUMERICOS
+%========================================
+\chapter{Esquemas Numéricos y Método de Volúmenes Finitos}
+\label{chap:ejercicio4}
+
+%========================================
+\section{Introducción}
+%========================================
+
+La discretización espacial de las ecuaciones de conservación en el método de volúmenes finitos (FVM) constituye uno de los aspectos fundamentales que determinan la precisión y estabilidad de las soluciones numéricas en CFD. La elección del esquema numérico para aproximar los flujos convectivos en las caras de los volúmenes de control tiene un impacto directo en la capacidad del método para resolver correctamente fenómenos con gradientes pronunciados, discontinuidades y ondas de choque~\cite{blazek2015cfd,versteeg2007introduction}.
+
+Los esquemas de bajo orden (como el \textit{upwind} de primer orden) son incondicionalmente estables y satisfacen el principio de monotonía, pero introducen una difusión numérica considerable que suaviza excesivamente las soluciones, degradando la precisión. Por otro lado, los esquemas de alto orden (como los basados en limitadores TVD -- \textit{Total Variation Diminishing}) reducen significativamente la difusión numérica y mejoran la resolución de discontinuidades, pero requieren un diseño cuidadoso para mantener la estabilidad y evitar oscilaciones espurias~\cite{sod1978survey,toro1994restoration}.
+
+El tubo de choque de Sod~\cite{sod1978survey} se ha consolidado como uno de los problemas de referencia (\textit{benchmark}) más utilizados para validar solvers compresibles y evaluar el comportamiento de esquemas numéricos. Este problema de Riemann unidimensional presenta una solución analítica exacta y contiene las tres estructuras características de flujos compresibles: onda de rarefacción, discontinuidad de contacto y onda de choque. La capacidad de un esquema para capturar correctamente estas estructuras con mínima difusión numérica y sin oscilaciones es un indicador clave de su calidad~\cite{toro1994restoration}.
+
+%========================================
+\section{Objetivo}
+%========================================
+
+El objetivo de este ejercicio es analizar y comprender el efecto de los esquemas de discretización espacial en el método de volúmenes finitos, mediante dos problemas complementarios:
+
+\textbf{Parte 1 -- Ecuación de transporte 1D:}
+\begin{itemize}
+    \item Implementar y resolver la ecuación de convección-difusión unidimensional mediante el método de volúmenes finitos en MATLAB.
+    \item Analizar el efecto del número de Peclet (relación convección/difusión) en la solución numérica.
+    \item Estudiar el efecto del refinamiento de malla en la precisión de la solución.
+    \item Validar los resultados con la solución analítica exacta.
+\end{itemize}
+
+\textbf{Parte 2 -- Tubo de choque de Sod:}
+\begin{itemize}
+    \item Simular el problema del tubo de choque de Sod utilizando OpenFOAM con esquemas de bajo y alto orden.
+    \item Comparar los esquemas \textit{upwind} (primer orden) y \textit{vanAlbada} (alto orden con limitador TVD).
+    \item Validar las soluciones numéricas con la solución analítica exacta del problema de Riemann.
+    \item Cuantificar el error numérico y evaluar la capacidad de cada esquema para resolver discontinuidades.
+\end{itemize}
+
+%========================================
+\section{Fundamento teórico}
+%========================================
+
+\subsection{Método de volúmenes finitos}
+
+El método de volúmenes finitos discretiza el dominio computacional en volúmenes de control y aplica las leyes de conservación en forma integral sobre cada volumen. Para una variable escalar $\phi$ transportada por un campo de velocidad $\mathbf{u}$ con difusión caracterizada por $\Gamma$, la ecuación de transporte estacionaria unidimensional es:
+\begin{equation}
+    \frac{d}{dx}\left(\rho u \phi\right) = \frac{d}{dx}\left(\Gamma \frac{d\phi}{dx}\right)
+\end{equation}
+
+Integrando sobre un volumen de control centrado en el punto $P$ y limitado por las caras $e$ (este) y $w$ (oeste):
+\begin{equation}
+    \left(\rho u \phi\right)_e - \left(\rho u \phi\right)_w = \left(\Gamma \frac{d\phi}{dx}\right)_e - \left(\Gamma \frac{d\phi}{dx}\right)_w
+\end{equation}
+
+La aproximación de los flujos en las caras requiere interpolar valores desde los centros de las celdas. El término difusivo se aproxima mediante diferencias centradas, mientras que el término convectivo admite múltiples esquemas de interpolación que determinan las propiedades del método numérico.
+
+\subsection{Número de Peclet}
+
+El número de Peclet de celda ($Pe$) caracteriza la importancia relativa de la convección frente a la difusión:
+\begin{equation}
+    Pe = \frac{\rho u \Delta x}{\Gamma}
+\end{equation}
+
+Cuando $Pe \ll 1$, la difusión domina y los esquemas centrados son adecuados. Para $Pe \gg 1$, la convección domina y se requieren esquemas con sesgo hacia aguas arriba (\textit{upwind}) para mantener la estabilidad.
+
+\subsection{Esquemas de discretización espacial}
+
+\textbf{Esquema Upwind de primer orden:}
+
+Utiliza el valor de la celda aguas arriba para interpolar en la cara:
+\begin{equation}
+    \phi_f = \begin{cases}
+        \phi_P & \text{si } u_f > 0 \\
+        \phi_N & \text{si } u_f < 0
+    \end{cases}
+\end{equation}
+
+Ventajas: Incondicionalmente estable, satisface el criterio de acotación (\textit{boundedness}).\\
+Desventajas: Altamente difusivo (error de truncamiento de primer orden), suaviza excesivamente discontinuidades.
+
+\textbf{Esquema vanAlbada (alto orden con limitador TVD):}
+
+Emplea un limitador que modula la interpolación lineal para evitar oscilaciones:
+\begin{equation}
+    \psi(r) = \frac{r^2 + r}{r^2 + 1}
+\end{equation}
+donde $r$ es el cociente de gradientes consecutivos. Este limitador proporciona:
+\begin{itemize}
+    \item Precisión de segundo orden en regiones suaves
+    \item Transición automática a primer orden cerca de discontinuidades
+    \item Propiedad TVD que previene oscilaciones no físicas
+\end{itemize}
+
+\subsection{Problema del tubo de choque de Sod}
+
+El tubo de choque de Sod es un problema de Riemann unidimensional que consiste en un tubo cerrado dividido inicialmente por una membrana que separa dos estados termodinámicos:
+\begin{itemize}
+    \item \textbf{Estado izquierdo ($x < 0.5$):} $\rho_L = 1.0$ kg/m$^3$, $p_L = 1.0$ Pa, $u_L = 0$ m/s
+    \item \textbf{Estado derecho ($x > 0.5$):} $\rho_R = 0.125$ kg/m$^3$, $p_R = 0.1$ Pa, $u_R = 0$ m/s
+\end{itemize}
+
+Al eliminar la membrana en $t = 0$, la discontinuidad se descompone en tres ondas:
+\begin{enumerate}
+    \item \textbf{Onda de rarefacción:} Propagándose hacia la izquierda, reduce continuamente presión y densidad.
+    \item \textbf{Discontinuidad de contacto:} Separa fluidos de diferente densidad pero igual presión y velocidad.
+    \item \textbf{Onda de choque:} Discontinuidad que se propaga hacia la derecha, incrementando bruscamente presión y densidad.
+\end{enumerate}
+
+Este problema admite solución analítica exacta obtenida mediante el método de las características~\cite{sod1978survey,toro1994restoration}.
+
+%========================================
+\section{Condiciones de simulación}
+%========================================
+
+\subsection{Parte 1: Ecuación de transporte 1D}
+
+\textbf{Parámetros del problema:}
+\begin{itemize}
+    \item Longitud del dominio: $L = 1.0$ m
+    \item Densidad: $\rho = 1.0$ kg/m$^3$
+    \item Coeficiente de difusión: $\Gamma = 0.1$ kg/(m·s)
+    \item Condiciones de contorno: $\phi(0) = 1.0$, $\phi(L) = 0.0$
+\end{itemize}
+
+\textbf{Casos analizados:}
+\begin{enumerate}
+    \item \textbf{Caso 1 (Validación):} $N = 5$ celdas, $u = 0.1$ m/s $\Rightarrow Pe = 1.0$
+    \item \textbf{Caso 2 (Alta velocidad):} $N = 5$ celdas, $u = 2.5$ m/s $\Rightarrow Pe = 25.0$
+    \item \textbf{Caso 3 (Refinamiento):} $N = 20$ celdas, $u = 2.5$ m/s $\Rightarrow Pe = 25.0$
+\end{enumerate}
+
+La solución analítica para este problema es:
+\begin{equation}
+    \phi(x) = \frac{\phi_L - B}{1} + B e^{Pe \cdot x/L}, \quad B = \frac{\phi_L - \phi_0}{e^{Pe} - 1}
+\end{equation}
+
+\subsection{Parte 2: Tubo de choque de Sod}
+
+\textbf{Configuración de OpenFOAM:}
+\begin{itemize}
+    \item Solver: \texttt{fluid} (flujo compresible no viscoso)
+    \item Malla: 1000 celdas uniformes en $x \in [-5, 5]$ m
+    \item Tiempo de simulación: $t_{\text{final}} = 0.1$ s
+    \item Paso temporal: adaptativo con CFL $< 0.9$
+    \item Gas: aire ideal con $\gamma = 1.4$, $R = 287$ J/(kg·K)
+\end{itemize}
+
+\textbf{Esquemas comparados:}
+\begin{itemize}
+    \item \textbf{Bajo orden:} Upwind de primer orden en todos los términos convectivos
+    \item \textbf{Alto orden:} vanAlbada en todos los términos convectivos
+\end{itemize}
+
+\textbf{Condiciones iniciales:}
+
+Se empleó el diccionario \texttt{setFields} para establecer:
+\begin{lstlisting}[language=C++,caption=Extracto de setFieldsDict]
+defaultFieldValues
+(
+    volScalarFieldValue p 10000     // p_R = 0.1 bar
+    volScalarFieldValue rho 0.125   // rho_R
+    volVectorFieldValue U (0 0 0)
+);
+regions
+(
+    boxToCell
+    {
+        box (-10 -10 -10) (0 10 10);
+        fieldValues
+        (
+            volScalarFieldValue p 100000  // p_L = 1 bar
+            volScalarFieldValue rho 1.0   // rho_L
+        );
+    }
+);
+\end{lstlisting}
+
+%========================================
+\section{Resultados}
+%========================================
+
+\subsection{Parte 1: Ecuación de transporte 1D}
+
+\subsubsection{Caso 1: Validación con $Pe = 1.0$}
+
+La Fig.~\ref{fig:fvm_caso1} muestra la comparación entre la solución analítica y la solución numérica obtenida con el método de volúmenes finitos para 5 celdas y $Pe = 1.0$. Con este número de Peclet moderado, los efectos convectivos y difusivos son comparables.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Ejercicio4/FVM_caso1_validacion.png}
+    \caption{Validación del método FVM: comparación con solución analítica para $N=5$ celdas y $Pe=1.0$.}
+    \label{fig:fvm_caso1}
+\end{figure}
+
+Los valores numéricos obtenidos fueron:
+\begin{equation}
+    \phi = \begin{bmatrix} 0.8993 \\ 0.7784 \\ 0.6334 \\ 0.4594 \\ 0.2506 \end{bmatrix}
+\end{equation}
+
+El error RMS respecto a la solución analítica fue de $5.06\%$, atribuible a la discretización gruesa de la malla.
+
+\subsubsection{Caso 2: Efecto de alta velocidad ($Pe = 25.0$)}
+
+La Fig.~\ref{fig:fvm_velocidad} compara las soluciones para $Pe = 1.0$ y $Pe = 25.0$ con la misma malla de 5 celdas. El aumento de la velocidad (y por tanto del número de Peclet) hace que la convección domine sobre la difusión, generando un perfil mucho más abrupto cerca de la salida.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Ejercicio4/FVM_efecto_velocidad.png}
+    \caption{Efecto del número de Peclet: comparación entre $Pe=1.0$ y $Pe=25.0$ para $N=5$ celdas.}
+    \label{fig:fvm_velocidad}
+\end{figure}
+
+Con $Pe = 25.0$, la solución numérica presenta valores muy cercanos a $\phi = 1$ en casi todo el dominio, decayendo bruscamente solo cerca de la frontera de salida, lo que refleja el carácter dominado por convección del problema.
+
+\subsubsection{Caso 3: Efecto del refinamiento de malla}
+
+La Fig.~\ref{fig:fvm_refinamiento} muestra el impacto del refinamiento de malla en la precisión de la solución. Al incrementar de 5 a 20 celdas manteniendo $Pe = 25.0$, la solución numérica se aproxima significativamente a la solución analítica, capturando mejor el gradiente pronunciado cerca de la salida.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Ejercicio4/FVM_efecto_refinamiento.png}
+    \caption{Efecto del refinamiento de malla: $N=5$ vs $N=20$ celdas para $Pe=25.0$.}
+    \label{fig:fvm_refinamiento}
+\end{figure}
+
+\subsubsection{Resumen de casos}
+
+La Fig.~\ref{fig:fvm_resumen} presenta una comparación consolidada de los tres casos analizados, evidenciando cómo tanto el número de Peclet como el refinamiento de malla influyen en la precisión de la solución numérica.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\textwidth]{Ejercicio4/FVM_resumen.png}
+    \caption{Resumen comparativo de los tres casos: efecto del número de Peclet y refinamiento de malla.}
+    \label{fig:fvm_resumen}
+\end{figure}
+
+\subsection{Parte 2: Tubo de choque de Sod}
+
+\subsubsection{Comparación de esquemas numéricos}
+
+La Fig.~\ref{fig:shock_comparacion} presenta la comparación entre la solución analítica exacta y las soluciones numéricas obtenidas con esquemas de bajo orden (upwind) y alto orden (vanAlbada) en $t = 0.1$ s.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\textwidth]{Ejercicio4/shocktube_comparacion_esquemas.png}
+    \caption{Comparación de esquemas numéricos para el tubo de choque de Sod en $t=0.1$ s: densidad, presión y velocidad.}
+    \label{fig:shock_comparacion}
+\end{figure}
+
+\textbf{Observaciones:}
+\begin{itemize}
+    \item El esquema de alto orden (vanAlbada) captura las tres estructuras características con alta precisión, especialmente en la onda de rarefacción.
+    \item El esquema de bajo orden (upwind) presenta difusión numérica significativa, suavizando excesivamente la discontinuidad de contacto y la onda de choque.
+    \item Ambos esquemas resuelven correctamente las posiciones de las ondas, pero difieren notablemente en la nitidez de las discontinuidades.
+\end{itemize}
+
+\subsubsection{Detalle de las discontinuidades}
+
+La Fig.~\ref{fig:shock_detalle} muestra ampliaciones de las tres regiones características del problema para analizar el comportamiento de cada esquema en las zonas de mayor gradiente.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\textwidth]{Ejercicio4/shocktube_detalle_discontinuidades.png}
+    \caption{Detalle de las discontinuidades: onda de choque, discontinuidad de contacto y onda de rarefacción.}
+    \label{fig:shock_detalle}
+\end{figure}
+
+\textbf{Análisis por región:}
+\begin{itemize}
+    \item \textbf{Onda de choque ($x \approx 0.85$):} El esquema vanAlbada captura la discontinuidad en aproximadamente 3--4 celdas, mientras que el upwind la extiende sobre 8--10 celdas.
+    \item \textbf{Discontinuidad de contacto ($x \approx 0.68$):} Ambos esquemas presentan difusión numérica considerable, aunque vanAlbada mantiene un gradiente más pronunciado.
+    \item \textbf{Onda de rarefacción ($0.26 < x < 0.50$):} La expansión continua se resuelve con alta precisión en ambos esquemas, siendo la región donde la difusión numérica tiene menor impacto.
+\end{itemize}
+
+\subsubsection{Diagrama espacio-tiempo}
+
+La Fig.~\ref{fig:shock_xt} presenta el diagrama $x$-$t$ que ilustra la evolución temporal de las ondas características del problema.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.75\textwidth]{Ejercicio4/shocktube_diagrama_xt.png}
+    \caption{Diagrama $x$-$t$ del tubo de choque de Sod mostrando la propagación de las ondas características.}
+    \label{fig:shock_xt}
+\end{figure}
+
+Las líneas representan:
+\begin{itemize}
+    \item \textbf{Azul:} Cabeza y cola de la onda de rarefacción
+    \item \textbf{Verde:} Discontinuidad de contacto
+    \item \textbf{Rojo:} Onda de choque
+\end{itemize}
+
+La línea horizontal en $t = 0.1$ s indica el instante de tiempo analizado en las figuras anteriores.
+
+\subsubsection{Análisis cuantitativo de errores}
+
+La Fig.~\ref{fig:shock_errores} presenta un resumen cuantitativo de los errores RMS normalizados de cada esquema respecto a la solución analítica.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.75\textwidth]{Ejercicio4/shocktube_tabla_errores.png}
+    \caption{Tabla de errores RMS normalizados para los esquemas de bajo y alto orden.}
+    \label{fig:shock_errores}
+\end{figure}
+
+Los resultados muestran que el esquema de alto orden (vanAlbada) reduce el error en densidad y presión en un factor superior a 3 respecto al esquema de bajo orden (upwind), confirmando la superioridad del limitador TVD en problemas con discontinuidades.
+
+%========================================
+\section{Conclusiones}
+%========================================
+
+El análisis de esquemas numéricos mediante los problemas de convección-difusión 1D y el tubo de choque de Sod ha permitido extraer las siguientes conclusiones:
+
+\begin{itemize}
+    \item El número de Peclet es un parámetro fundamental que caracteriza el balance entre convección y difusión. Para $Pe \gg 1$, la solución presenta gradientes muy pronunciados que requieren mallas refinadas o esquemas con sesgo aguas arriba para evitar oscilaciones.
+
+    \item El método de volúmenes finitos implementado en MATLAB para la ecuación de transporte 1D reproduce correctamente la solución analítica, con errores que disminuyen significativamente al refinar la malla (de 5 a 20 celdas).
+
+    \item El problema del tubo de choque de Sod constituye un caso de validación riguroso para solvers compresibles, ya que contiene las tres estructuras fundamentales de flujos compresibles: ondas de rarefacción, discontinuidades de contacto y ondas de choque.
+
+    \item Los esquemas de bajo orden (upwind de primer orden) son incondicionalmente estables y satisfacen el criterio de acotación, pero introducen una difusión numérica excesiva que suaviza las discontinuidades sobre 8--10 celdas, reduciendo significativamente la precisión.
+
+    \item Los esquemas de alto orden con limitadores TVD (vanAlbada) proporcionan un balance óptimo entre precisión y estabilidad, capturando discontinuidades en 3--4 celdas y reduciendo el error RMS en un factor mayor a 3 respecto a esquemas de primer orden.
+
+    \item La difusión numérica se concentra principalmente en las regiones de discontinuidad (contacto y choque), mientras que las regiones suaves (como la onda de rarefacción) se resuelven con alta precisión incluso con esquemas de bajo orden.
+
+    \item OpenFOAM implementa correctamente el esquema vanAlbada con limitador TVD, como se demuestra por la excelente concordancia con la solución analítica del problema de Riemann.
+
+    \item Para aplicaciones prácticas de ingeniería que involucren flujos compresibles con discontinuidades (ondas de choque, detonaciones, expansiones supersónicas), es imprescindible utilizar esquemas de alto orden con limitadores para obtener resultados precisos y físicamente realistas.
+
+    \item La elección del esquema numérico debe considerar no solo la precisión, sino también el coste computacional: los esquemas de alto orden requieren más operaciones por celda pero permiten usar mallas más gruesas, resultando en un balance favorable en la mayoría de aplicaciones.
+\end{itemize}
+
+% Fin del capítulo 4
