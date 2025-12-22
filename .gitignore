@@ -1,0 +1,97 @@
+# General
+.DS_Store
+*.pyc
+__pycache__/
+
+# MATLAB figures/temp
+*.fig
+
+# OpenFOAM runtime
+processor*/
+
+# Additional ignores for CFD project
+
+# MATLAB
+*.asv
+*.m~
+
+# OpenFOAM
+*.log
+postProcessing/
+*.foam
+*.vtk
+*.OpenFOAM
+
+# LaTeX
+*.aux
+*.log
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.toc
+*.lof
+*.lot
+*.out
+*.synctex.gz
+*.dvi
+*.ps
+
+# Python
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.venv-*/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
+
+# macOS
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Temporary files
+*~
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Large files tracked with LFS (commented out as they are tracked)
+# *.mat
+# *.csv
+# *.png
+# *.pdf
+# *.vtk
