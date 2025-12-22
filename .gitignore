@@ -11,6 +11,48 @@ processor*/
 
 # Additional ignores for CFD project
 
+# Documentation files (working notes)
+CLAUDE.md
+Fallos.md
+
+# MATLAB
+*.asv
+*.m~
+
+# OpenFOAM
+*.log
+postProcessing/
+*.foam
+*.vtk
+*.OpenFOAM
+
+# LaTeX
+*.aux
+*.log
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.toc
+*.lof
+*.lot
+*.out
+*.synctex.gz
+*.dvi
+*.ps
+
+# Python
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.venv-*/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+
 # MATLAB
 *.asv
 *.m~
