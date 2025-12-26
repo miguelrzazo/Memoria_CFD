@@ -1,16 +1,7 @@
 %% ========================================================================
 %  EJERCICIO 3: METODO VORTEX LATTICE - CONFIGURACION TANDEM
 %  Master en Ingenieria Aeronautica - Universidad de Leon
-%  Dinamica de Fluidos Computacional
-% =========================================================================
-%  Autor: Miguel Rosa
-%  Fecha: Diciembre 2025
-%
-%  Descripcion:
-%  Implementacion del metodo Vortex Lattice para analizar una configuracion
-%  tandem de dos alas. Se calculan los coeficientes de sustentacion (CL),
-%  resistencia inducida (CDi), momento de cabeceo (CM) y presion (Cp) para
-%  distintos angulos de ataque.
+
 % =========================================================================
 
 clear; clc; close all;
@@ -514,6 +505,96 @@ legend([h1, h2], {'Ala Principal', 'Ala Trasera'}, 'Location', 'northeast', 'Fon
 
 saveas(fig9, fullfile(fig_dir, 'geometria_3D.png'));
 fprintf('  Guardado: geometria_3D.png\n');
+
+%% --- FIGURA 10: Distribucion de Cp vs posicion en envergadura (3x1 grid) ---
+fig10 = figure('Position', [100, 100, 1200, 900], 'Color', 'w');
+
+% Configurar colores para angulos de ataque
+colors = [
+    0.1216, 0.4667, 0.7059;   % Azul
+    1.0000, 0.4980, 0.0549;   % Naranja
+    0.1725, 0.6275, 0.1725;   % Verde
+    0.8392, 0.1529, 0.1569;   % Rojo
+    0.5804, 0.4039, 0.7412;   % Purpura
+    0.5490, 0.3373, 0.2941;   % Marron
+    0.8902, 0.4667, 0.7608;   % Rosa
+    0.4980, 0.4980, 0.4980    % Gris
+];
+
+% Tipos de linea para diferentes alas
+line_styles = {'-', '--', ':'};
+
+% Subplot 1: Ala principal
+subplot(3,1,1);
+hold on; grid on; box on;
+
+for k = 1:n_alpha
+    plot(y_main, Cp_main(:,k), 'Color', colors(k,:), 'LineStyle', '-', ...
+        'LineWidth', 2, 'DisplayName', sprintf('$\\alpha = %+.1f^\\circ$', alphas(k)));
+end
+
+xlabel('$y$ [m]', 'FontSize', 12);
+ylabel('$C_p$ [-]', 'FontSize', 12);
+title('Ala Principal - Distribuci\''on de $C_p$', 'FontSize', 14);
+legend('Location', 'northeast', 'FontSize', 10, 'NumColumns', 2);
+set(gca, 'YDir', 'reverse');  % Convencion aeronautica
+xlim([min(y_main), max(y_main)]);
+
+% Subplot 2: Ala trasera
+subplot(3,1,2);
+hold on; grid on; box on;
+
+for k = 1:n_alpha
+    plot(y_rear, Cp_rear(:,k), 'Color', colors(k,:), 'LineStyle', '--', ...
+        'LineWidth', 2, 'DisplayName', sprintf('$\\alpha = %+.1f^\\circ$', alphas(k)));
+end
+
+xlabel('$y$ [m]', 'FontSize', 12);
+ylabel('$C_p$ [-]', 'FontSize', 12);
+title('Ala Trasera - Distribuci\''on de $C_p$', 'FontSize', 14);
+legend('Location', 'northeast', 'FontSize', 10, 'NumColumns', 2);
+set(gca, 'YDir', 'reverse');  % Convencion aeronautica
+xlim([min(y_rear), max(y_rear)]);
+
+% Subplot 3: Conjunto (ambas alas)
+subplot(3,1,3);
+hold on; grid on; box on;
+
+legend_entries = [];
+h_plots = [];
+
+for k = 1:n_alpha
+    % Ala principal (linea continua)
+    h1 = plot(y_main, Cp_main(:,k), 'Color', colors(k,:), 'LineStyle', '-', ...
+        'LineWidth', 2);
+    
+    % Ala trasera (linea discontinua)
+    h2 = plot(y_rear, Cp_rear(:,k), 'Color', colors(k,:), 'LineStyle', '--', ...
+        'LineWidth', 2);
+    
+    if k == 1
+        legend_entries = [legend_entries, h1, h2];
+    end
+end
+
+% Crear leyenda personalizada
+legend(legend_entries, {'Ala Principal', 'Ala Trasera'}, ...
+    'Location', 'northeast', 'FontSize', 10);
+
+xlabel('$y$ [m]', 'FontSize', 12);
+ylabel('$C_p$ [-]', 'FontSize', 12);
+title('Conjunto - Distribuci\''on de $C_p$ (diferentes \''angulos)', 'FontSize', 14);
+set(gca, 'YDir', 'reverse');  % Convencion aeronautica
+
+% Ajustar limites del eje x para mostrar ambas alas
+xlim([min([y_main; y_rear]), max([y_main; y_rear])]);
+
+% Titulo general
+sgtitle('Distribuci\''on de Coeficiente de Presi\''on $C_p$ - M\''etodo Vortex Lattice', ...
+    'FontSize', 16, 'Interpreter', 'latex');
+
+saveas(fig10, fullfile(fig_dir, 'Cp_distribucion_completa.png'));
+fprintf('  Guardado: Cp_distribucion_completa.png\n');
 
 
 %% ========================================================================

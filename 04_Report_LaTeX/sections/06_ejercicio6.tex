@@ -122,7 +122,7 @@ El dominio computacional es un rectángulo de dimensiones $200D \times 200D$ cen
 
 Se generaron tres niveles de malla mediante el factor de escala \texttt{scalingFactor} en \texttt{blockMeshDict}:
 
-\begin{table}[htbp]
+\begin{table}[h!]
     \centering
     \caption{Características de los tres niveles de malla empleados.}
     \label{tab:mallas}
@@ -248,7 +248,7 @@ La malla fina cuadriplica la resolución de la malla gruesa y presenta la máxim
 
 La Tabla~\ref{tab:cd_resultados} presenta los coeficientes de arrastre calculados para cada nivel de malla una vez alcanzada la convergencia estacionaria.
 
-\begin{table}[htbp]
+\begin{table}[h!]
     \centering
     \caption{Coeficientes de arrastre para cada nivel de refinamiento de malla.}
     \label{tab:cd_resultados}
@@ -352,24 +352,38 @@ El valor obtenido ($0.975 \approx 1$) confirma que:
     \item El orden de convergencia observado ($p = 1.22$) es representativo del comportamiento real del error.
 \end{enumerate}
 
-La Fig.~\ref{fig:resumen_convergencia_ej6} presenta un resumen de todos los parámetros del estudio de convergencia.
+La Tabla~\ref{tab:resumen_convergencia} presenta un resumen de todos los parámetros del estudio de convergencia.
 
-\begin{figure}[htbp]
+\begin{table}[h!]
     \centering
-    \includegraphics[width=0.85\textwidth]{Ejercicio6/resumen_convergencia.png}
-    \caption{Resumen del estudio de convergencia de malla: orden de convergencia, valor extrapolado de Richardson y métricas GCI.}
-    \label{fig:resumen_convergencia_ej6}
-\end{figure}
+    \caption{Resumen del estudio de convergencia de malla.}
+    \label{tab:resumen_convergencia}
+    \begin{tabular}{lc}
+        \hline
+        \textbf{Parámetro} & \textbf{Valor} \\
+        \hline
+        Ratio de refinamiento ($r$) & 2 \\
+        Orden de convergencia observado ($p$) & 1.22 \\
+        $C_D$ malla gruesa & 11.20 \\
+        $C_D$ malla media & 10.50 \\
+        $C_D$ malla fina & 10.20 \\
+        $C_D$ Richardson (extrapolado) & 9.975 \\
+        $GCI_{21}$ (fina-media) & 2.76\% \\
+        $GCI_{32}$ (media-gruesa) & 6.26\% \\
+        Ratio asintótico & 0.975 \\
+        \hline
+    \end{tabular}
+\end{table}
 
 %========================================
 \section{Efecto de la Orientación de la Malla}
 %========================================
 
-Para evaluar si la configuración espacial de la malla introduce sesgos direccionales, se realizaron simulaciones adicionales con la malla fina rotando el ángulo de incidencia del flujo: $\alpha = -5°$, $0°$ y $+5°$.
+Para evaluar si la configuración espacial de la malla introduce sesgos direccionales, se realizaron simulaciones adicionales con la malla fina rotando el ángulo de incidencia del flujo: $\alpha = -5^\circ$, $0^\circ$ y $+5^\circ$.
 
 Teóricamente, un cilindro circular presenta simetría axial y el coeficiente de arrastre debe ser independiente del ángulo de incidencia. Cualquier variación observada se atribuiría a asimetrías introducidas por la discretización.
 
-\begin{table}[htbp]
+\begin{table}[h!]
     \centering
     \caption{Efecto del ángulo de incidencia en los coeficientes aerodinámicos (malla fina).}
     \label{tab:angulo_ataque}
@@ -400,13 +414,65 @@ La Fig.~\ref{fig:efecto_angulo_ej6} visualiza estos resultados.
     \label{fig:efecto_angulo_ej6}
 \end{figure}
 
+\subsection{Comparación visual de campos para diferentes ángulos}
+
+Las Figuras~\ref{fig:velocidad_angulos_ej6} y~\ref{fig:presion_angulos_ej6} muestran la comparación de los campos de velocidad y presión obtenidos para los tres ángulos de incidencia analizados ($\alpha = -5^\circ$, $0^\circ$, $+5^\circ$).
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Ejercicio6/velocidad_alpha_neg5.png}
+        \caption*{(a) $\alpha = -5^\circ$}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Ejercicio6/velocidad_alpha_0.png}
+        \caption*{(b) $\alpha = 0^\circ$}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Ejercicio6/velocidad_alpha_pos5.png}
+        \caption*{(c) $\alpha = +5^\circ$}
+    \end{minipage}
+    \caption{Comparación del campo de velocidad para diferentes ángulos de incidencia. Se observa la invariancia del campo debido a la simetría del cilindro.}
+    \label{fig:velocidad_angulos_ej6}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Ejercicio6/presion_alpha_neg5.png}
+        \caption*{(a) $\alpha = -5^\circ$}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Ejercicio6/presion_alpha_0.png}
+        \caption*{(b) $\alpha = 0^\circ$}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Ejercicio6/presion_alpha_pos5.png}
+        \caption*{(c) $\alpha = +5^\circ$}
+    \end{minipage}
+    \caption{Comparación del campo de presión para diferentes ángulos de incidencia. La distribución de presión se mantiene prácticamente invariante, confirmando la isotropía de la malla.}
+    \label{fig:presion_angulos_ej6}
+\end{figure}
+
+Las figuras confirman visualmente que la malla computacional preserva la simetría axial del problema: los campos de flujo son prácticamente idénticos independientemente del ángulo de incidencia, lo cual es el comportamiento esperado para un cilindro circular.
+
 %========================================
 \section{Campos de Flujo Obtenidos (Malla Fina)}
 %========================================
 
 \subsection{Campo de velocidad}
 
-La Fig.~\ref{fig:velocidad_fine_ej6} visualiza la magnitud del campo de velocidad $|\mathbf{U}|$ en el dominio computacional para la malla fina. La representación mediante colores (colormapa Rainbow Uniform) permite identificar las regiones de alta y baja velocidad.
+La Fig.~\ref{fig:velocidad_fine_ej6} visualiza la magnitud del campo de velocidad $|\mathbf{U}|$ en el dominio computacional para la malla fina. La representación mediante colores (mapa de colores \textit{Rainbow Uniform}) permite identificar las regiones de alta y baja velocidad.
 
 En el flujo de Stokes a $Re = 1$, se esperan gradientes suaves sin formación de vórtices cortantes. La magnitud de velocidad varía desde cero en la pared del cilindro hasta aproximadamente $1.5$ m/s en las regiones alejadas, donde el flujo no perturbado mantiene su valor de entrada $U_\infty = 1.0$ m/s. Las aceleraciones locales son debidas a la redirección del flujo alrededor del obstáculo.
 
@@ -426,7 +492,7 @@ Se observa una distribución simétrica de presión con máxima magnitud en los 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\textwidth]{Ejercicio6/presion_fine.png}
-    \caption{Campo de presión en la malla fina para $Re = 1$. La colormapa Cool to Warm resalta las zonas de alta presión (rojo, aguas arriba) y baja presión (azul, costados). La distribución simétrica confirma el carácter reversible del flujo de Stokes en régimen laminar.}
+    \caption{Campo de presión en la malla fina para $Re = 1$. El mapa de colores \textit{Cool to Warm} resalta las zonas de alta presión (rojo, aguas arriba) y baja presión (azul, costados). La distribución simétrica confirma el carácter reversible del flujo de Stokes en régimen laminar.}
     \label{fig:presion_fine_ej6}
 \end{figure}
 
@@ -436,7 +502,7 @@ Se observa una distribución simétrica de presión con máxima magnitud en los 
 
 El coeficiente de arrastre extrapolado ($C_D = 9.975$) se compara con valores de la literatura para $Re = 1$:
 
-\begin{table}[htbp]
+\begin{table}[h!]
     \centering
     \caption{Comparación del $C_D$ obtenido con soluciones de referencia para $Re = 1$.}
     \label{tab:validacion}

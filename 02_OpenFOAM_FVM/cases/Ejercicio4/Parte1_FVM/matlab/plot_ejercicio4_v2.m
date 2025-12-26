@@ -1,367 +1,291 @@
-%% EJERCICIO 4 - PARTE 2: Esquemas Numericos - Shock Tube de Sod
-% Comparacion alto orden (vanAlbada) vs bajo orden (upwind)
-% Lectura de datos reales de OpenFOAM
-% Master Ingenieria Aeronautica - CFD 2025
+%% EJERCICIO 4 - PARTE 1: Metodo de Volumenes Finitos
+
 
 clear; close all; clc;
 
-%% Configuracion
-output_dir = '../../figures/Ejercicio4/';
+%% Configuracion de salida
+output_dir = '../figures/';
 if ~exist(output_dir, 'dir'), mkdir(output_dir); end
 
-fprintf('=== EJERCICIO 4 PARTE 2: Tubo de Onda de Choque de Sod ===\n\n');
+fprintf('===========================================\n');
+fprintf('  EJERCICIO 4 - PARTE 1: FVM en MATLAB\n');
+fprintf('===========================================\n\n');
 
-%% Constantes fisicas del gas (aire)
-R_specific = 287.7;  % J/(kg*K) - constante de gas especifica del aire
-gamma = 1.4;         % Coeficiente adiabatico
+%% Parametros del problema (enunciado)
+L = 1.0;          % Longitud del dominio [m]
+rho = 1.0;        % Densidad [kg/m^3]
+Gamma = 0.1;      % Coeficiente de difusion [kg/(m*s)]
 
-%% Leer solucion analitica del CSV
-script_dir = fileparts(mfilename('fullpath'));
-csv_file = fullfile(script_dir, 'ResultadosAnaliticos.csv');
+% Condiciones de contorno
+phi_A = 1.0;      % phi en x=0
+phi_B = 0.0;      % phi en x=L
 
-if exist(csv_file, 'file')
-    data_anal = readtable(csv_file);
-    x_anal = data_anal.X;
-    rho_anal = data_anal.Rho;
-    p_anal = data_anal.P;
-    U_anal = data_anal.Vel;
-    fprintf('Solucion analitica cargada desde: %s\n', csv_file);
-else
-    error('No se encontro el archivo de solucion analitica: %s', csv_file);
+%% CASO 1: u = 0.1 m/s, N = 5 celdas
+fprintf('--- CASO 1: u = 0.1 m/s, N = 5 celdas ---\n');
+u = 0.1;
+N = 5;
+
+phi_1 = resolver_fvm(N, L, u, rho, Gamma, phi_A, phi_B);
+x_1 = linspace(L/(2*N), L - L/(2*N), N)';
+
+% Solucion analitica
+x_anal = linspace(0, L, 1000)';
+phi_anal_1 = solucion_analitica(x_anal, L, u, rho, Gamma, phi_A, phi_B);
+
+% Valores esperados del enunciado
+phi_esperado = [0.9421; 0.8006; 0.6276; 0.4163; 0.1579];
+
+fprintf('Resultados numericos vs esperados:\n');
+fprintf('  Celda   x [m]     phi_num    phi_esp    Error [%%]\n');
+for i = 1:N
+    error_pct = abs(phi_1(i) - phi_esperado(i))/phi_esperado(i) * 100;
+    fprintf('    %d     %.2f      %.4f     %.4f     %.2f%%\n', ...
+        i, x_1(i), phi_1(i), phi_esperado(i), error_pct);
 end
 
-%% Leer resultados de OpenFOAM - Alto Orden (vanAlbada)
-fprintf('\nLeyendo datos de OpenFOAM (alto orden - vanAlbada)...\n');
-case_high = fullfile(script_dir, 'shockTube');
-time_dir = '0.1';
+Pe_1 = rho * u * L / Gamma;
+fprintf('\nNumero de Peclet: Pe = %.2f\n', Pe_1);
 
-% Leer archivo line.xy del postProcessing
-graph_file_high = fullfile(case_high, 'postProcessing', 'graph', time_dir, 'line.xy');
+%% CASO 2: u = 2.5 m/s, N = 5 celdas
+fprintf('\n--- CASO 2: u = 2.5 m/s, N = 5 celdas ---\n');
+u = 2.5;
+N = 5;
 
-if exist(graph_file_high, 'file')
-    % Formato: x  T  mag(U)  p
-    data_high = readmatrix(graph_file_high, 'FileType', 'text', 'NumHeaderLines', 1);
-    x_high_raw = data_high(:,1);        % x en [-5, 5]
-    T_high = data_high(:,2);            % Temperatura [K]
-    U_high_raw = data_high(:,3);        % Velocidad [m/s]
-    p_high_raw = data_high(:,4);        % Presion [Pa]
+phi_2 = resolver_fvm(N, L, u, rho, Gamma, phi_A, phi_B);
+x_2 = linspace(L/(2*N), L - L/(2*N), N)';
 
-    % Calcular densidad usando ley de gas ideal: p = rho * R * T
-    rho_high_raw = p_high_raw ./ (R_specific * T_high);
+phi_anal_2 = solucion_analitica(x_anal, L, u, rho, Gamma, phi_A, phi_B);
 
-    % Normalizar para comparar con solucion analitica (dominio [0,1])
-    % OpenFOAM: x in [-5, 5], p_ref = 100000 Pa, rho_ref = 1 kg/m3
-    x_high = (x_high_raw + 5) / 10;     % Transformar a [0, 1]
-    p_high = p_high_raw / 100000;       % Normalizar presion
-    rho_high = rho_high_raw;            % Densidad ya en kg/m3
-    U_high = U_high_raw;                % Velocidad en m/s
+Pe_2 = rho * u * L / Gamma;
+fprintf('Numero de Peclet: Pe = %.2f\n', Pe_2);
+fprintf('Resultados: phi = [%.4f, %.4f, %.4f, %.4f, %.4f]\n', phi_2);
 
-    fprintf('  Datos alto orden cargados: %d puntos\n', length(x_high));
-else
-    warning('No se encontro postProcessing para alto orden');
-    x_high = []; rho_high = []; p_high = []; U_high = [];
+%% CASO 3: u = 2.5 m/s, N = 20 celdas
+fprintf('\n--- CASO 3: u = 2.5 m/s, N = 20 celdas ---\n');
+u = 2.5;
+N = 20;
+
+phi_3 = resolver_fvm(N, L, u, rho, Gamma, phi_A, phi_B);
+x_3 = linspace(L/(2*N), L - L/(2*N), N)';
+
+fprintf('Numero de Peclet: Pe = %.2f\n', Pe_2);
+fprintf('Primeros 5 valores: phi = [%.4f, %.4f, %.4f, %.4f, %.4f, ...]\n', phi_3(1:5));
+
+%% FIGURA 1: Caso 1 - Verificacion con valores del enunciado
+figure('Position', [100, 100, 800, 500], 'Color', 'w');
+
+u = 0.1;
+phi_anal_plot = solucion_analitica(x_anal, L, u, rho, Gamma, phi_A, phi_B);
+
+plot(x_anal, phi_anal_plot, 'k-', 'LineWidth', 2, 'DisplayName', 'Solucion analitica');
+hold on;
+plot(x_1, phi_1, 'bo-', 'LineWidth', 1.5, 'MarkerSize', 10, 'MarkerFaceColor', 'b', ...
+    'DisplayName', 'FVM (N=5)');
+plot(x_1, phi_esperado, 'rs', 'MarkerSize', 12, 'LineWidth', 2, ...
+    'DisplayName', 'Valores esperados');
+
+xlabel('$x$ [m]', 'Interpreter', 'latex', 'FontSize', 12);
+ylabel('$\phi$', 'Interpreter', 'latex', 'FontSize', 12);
+title(sprintf('Caso 1: $u = 0.1$ m/s, $N = 5$ celdas (Pe = %.2f)', Pe_1), ...
+    'Interpreter', 'latex', 'FontSize', 14);
+legend('Location', 'northeast', 'Interpreter', 'latex');
+grid on;
+xlim([0, L]);
+ylim([0, 1.1]);
+
+exportgraphics(gcf, [output_dir, 'fvm_caso1_verificacion.png'], 'Resolution', 300);
+fprintf('\nGuardada: fvm_caso1_verificacion.png\n');
+
+%% FIGURA 2: Comparacion de los 3 casos
+figure('Position', [100, 100, 1200, 400], 'Color', 'w');
+
+% Caso 1
+subplot(1,3,1);
+u = 0.1;
+phi_anal_1 = solucion_analitica(x_anal, L, u, rho, Gamma, phi_A, phi_B);
+plot(x_anal, phi_anal_1, 'k-', 'LineWidth', 2);
+hold on;
+plot(x_1, phi_1, 'bo-', 'LineWidth', 1.5, 'MarkerSize', 8, 'MarkerFaceColor', 'b');
+xlabel('$x$ [m]', 'Interpreter', 'latex');
+ylabel('$\phi$', 'Interpreter', 'latex');
+title(sprintf('$u = 0.1$ m/s, $N = 5$ (Pe = %.1f)', Pe_1), 'Interpreter', 'latex');
+legend({'Analitica', 'FVM'}, 'Location', 'northeast', 'Interpreter', 'latex');
+grid on; xlim([0,1]); ylim([0, 1.1]);
+
+% Caso 2
+subplot(1,3,2);
+u = 2.5;
+phi_anal_2 = solucion_analitica(x_anal, L, u, rho, Gamma, phi_A, phi_B);
+plot(x_anal, phi_anal_2, 'k-', 'LineWidth', 2);
+hold on;
+plot(x_2, phi_2, 'ro-', 'LineWidth', 1.5, 'MarkerSize', 8, 'MarkerFaceColor', 'r');
+xlabel('$x$ [m]', 'Interpreter', 'latex');
+ylabel('$\phi$', 'Interpreter', 'latex');
+title(sprintf('$u = 2.5$ m/s, $N = 5$ (Pe = %.1f)', Pe_2), 'Interpreter', 'latex');
+legend({'Analitica', 'FVM'}, 'Location', 'northeast', 'Interpreter', 'latex');
+grid on; xlim([0,1]); ylim([0, 1.1]);
+
+% Caso 3
+subplot(1,3,3);
+plot(x_anal, phi_anal_2, 'k-', 'LineWidth', 2);
+hold on;
+plot(x_3, phi_3, 'go-', 'LineWidth', 1.5, 'MarkerSize', 6, 'MarkerFaceColor', 'g');
+xlabel('$x$ [m]', 'Interpreter', 'latex');
+ylabel('$\phi$', 'Interpreter', 'latex');
+title(sprintf('$u = 2.5$ m/s, $N = 20$ (Pe = %.1f)', Pe_2), 'Interpreter', 'latex');
+legend({'Analitica', 'FVM'}, 'Location', 'northeast', 'Interpreter', 'latex');
+grid on; xlim([0,1]); ylim([0, 1.1]);
+
+sgtitle('Efecto de la velocidad y numero de celdas en la solucion FVM', ...
+    'Interpreter', 'latex', 'FontSize', 14);
+
+exportgraphics(gcf, [output_dir, 'fvm_comparacion_casos.png'], 'Resolution', 300);
+fprintf('Guardada: fvm_comparacion_casos.png\n');
+
+%% FIGURA 3: Efecto de incrementar Peclet
+figure('Position', [100, 100, 900, 600], 'Color', 'w');
+
+velocidades = [0.1, 0.5, 1.0, 2.5];
+colores = {'b', 'g', 'm', 'r'};
+N = 5;
+
+for i = 1:length(velocidades)
+    u = velocidades(i);
+    phi_num = resolver_fvm(N, L, u, rho, Gamma, phi_A, phi_B);
+    x_num = linspace(L/(2*N), L - L/(2*N), N)';
+    phi_anal = solucion_analitica(x_anal, L, u, rho, Gamma, phi_A, phi_B);
+    Pe = rho * u * L / Gamma;
+
+    plot(x_anal, phi_anal, [colores{i}, '-'], 'LineWidth', 1.5, ...
+        'DisplayName', sprintf('Anal. Pe=%.1f', Pe));
+    hold on;
+    plot(x_num, phi_num, [colores{i}, 'o'], 'MarkerSize', 8, 'MarkerFaceColor', colores{i}, ...
+        'HandleVisibility', 'off');
 end
 
-%% Leer resultados de OpenFOAM - Bajo Orden (upwind)
-fprintf('Leyendo datos de OpenFOAM (bajo orden - upwind)...\n');
-case_low = fullfile(script_dir, 'shockTube_lowOrder');
+xlabel('$x$ [m]', 'Interpreter', 'latex', 'FontSize', 12);
+ylabel('$\phi$', 'Interpreter', 'latex', 'FontSize', 12);
+title('Efecto del numero de Peclet en la solucion (N=5 celdas)', 'Interpreter', 'latex', 'FontSize', 14);
+legend('Location', 'northeast', 'Interpreter', 'latex');
+grid on;
+xlim([0, L]);
+ylim([0, 1.1]);
 
-graph_file_low = fullfile(case_low, 'postProcessing', 'graph', time_dir, 'line.xy');
+% Agregar anotacion
+text(0.6, 0.9, 'Marcadores: FVM', 'FontSize', 10, 'Interpreter', 'latex');
+text(0.6, 0.85, 'Lineas: Analitica', 'FontSize', 10, 'Interpreter', 'latex');
 
-if exist(graph_file_low, 'file')
-    data_low = readmatrix(graph_file_low, 'FileType', 'text', 'NumHeaderLines', 1);
-    x_low_raw = data_low(:,1);
-    T_low = data_low(:,2);
-    U_low_raw = data_low(:,3);
-    p_low_raw = data_low(:,4);
+exportgraphics(gcf, [output_dir, 'fvm_efecto_peclet.png'], 'Resolution', 300);
+fprintf('Guardada: fvm_efecto_peclet.png\n');
 
-    rho_low_raw = p_low_raw ./ (R_specific * T_low);
+%% FIGURA 4: Convergencia con refinamiento de malla
+figure('Position', [100, 100, 800, 500], 'Color', 'w');
 
-    x_low = (x_low_raw + 5) / 10;
-    p_low = p_low_raw / 100000;
-    rho_low = rho_low_raw;
-    U_low = U_low_raw;
+u = 2.5;
+Pe = rho * u * L / Gamma;
+Ns = [5, 10, 20, 50, 100];
+errores = zeros(size(Ns));
 
-    fprintf('  Datos bajo orden cargados: %d puntos\n', length(x_low));
-else
-    warning('No se encontro postProcessing para bajo orden - usando datos sinteticos');
-    % Si no hay datos reales, usar los del alto orden con mas difusion
-    if ~isempty(x_high)
-        x_low = x_high;
-        smooth_kernel = ones(15,1)/15;
-        rho_low = conv(rho_high, smooth_kernel, 'same');
-        p_low = conv(p_high, smooth_kernel, 'same');
-        U_low = conv(U_high, smooth_kernel, 'same');
+for i = 1:length(Ns)
+    N = Ns(i);
+    phi_num = resolver_fvm(N, L, u, rho, Gamma, phi_A, phi_B);
+    x_num = linspace(L/(2*N), L - L/(2*N), N)';
+    phi_anal_interp = solucion_analitica(x_num, L, u, rho, Gamma, phi_A, phi_B);
+    errores(i) = sqrt(mean((phi_num - phi_anal_interp).^2));
+end
+
+loglog(Ns, errores, 'bo-', 'LineWidth', 2, 'MarkerSize', 10, 'MarkerFaceColor', 'b');
+hold on;
+% Linea de referencia orden 1
+loglog(Ns, errores(1) * (Ns(1)./Ns), 'r--', 'LineWidth', 1.5, 'DisplayName', 'Orden 1');
+% Linea de referencia orden 2
+loglog(Ns, errores(1) * (Ns(1)./Ns).^2, 'g--', 'LineWidth', 1.5, 'DisplayName', 'Orden 2');
+
+xlabel('Numero de celdas $N$', 'Interpreter', 'latex', 'FontSize', 12);
+ylabel('Error RMS', 'Interpreter', 'latex', 'FontSize', 12);
+title(sprintf('Convergencia de malla ($u = 2.5$ m/s, Pe = %.1f)', Pe), ...
+    'Interpreter', 'latex', 'FontSize', 14);
+legend({'FVM Upwind', 'Orden 1', 'Orden 2'}, 'Location', 'southwest', 'Interpreter', 'latex');
+grid on;
+
+exportgraphics(gcf, [output_dir, 'fvm_convergencia_malla.png'], 'Resolution', 300);
+fprintf('Guardada: fvm_convergencia_malla.png\n');
+
+%% Guardar resultados
+save([output_dir, 'resultados_fvm_parte1.mat'], ...
+    'phi_1', 'x_1', 'phi_2', 'x_2', 'phi_3', 'x_3', ...
+    'phi_esperado', 'Pe_1', 'Pe_2', 'Ns', 'errores');
+
+fprintf('\n===========================================\n');
+fprintf('  EJERCICIO 4 PARTE 1 COMPLETADO\n');
+fprintf('===========================================\n');
+
+%% ========== FUNCIONES AUXILIARES ==========
+
+function phi = resolver_fvm(N, L, u, rho, Gamma, phi_A, phi_B)
+    % Resuelve la ecuacion de conveccion-difusion 1D usando FVM
+    % Esquema: Upwind para conveccion, diferencias centrales para difusion
+
+    dx = L / N;
+
+    % Flujo convectivo y coeficiente difusivo en las caras
+    F = rho * u;          % Flujo masico convectivo
+    D = Gamma / dx;       % Coeficiente difusivo
+
+    % Numero de Peclet de celda
+    Pe_cell = F * dx / Gamma;
+
+    % Inicializar matriz y vector
+    A = zeros(N, N);
+    b = zeros(N, 1);
+
+    % Coeficientes para celdas interiores (esquema upwind)
+    aW = D + max(F, 0);
+    aE = D + max(-F, 0);
+
+    for i = 1:N
+        if i == 1
+            % Celda adyacente a frontera izquierda (x=0)
+            Sp = -(2*D + F);  % Coeficiente de phi_A en la ecuacion
+            Su = (2*D + F) * phi_A;  % Termino fuente
+            aP = aE - Sp;
+            A(i, i) = aP;
+            A(i, i+1) = -aE;
+            b(i) = Su;
+        elseif i == N
+            % Celda adyacente a frontera derecha (x=L)
+            Sp = -(2*D);  % Para condicion de salida
+            Su = 2*D * phi_B;
+            aP = aW - Sp;
+            A(i, i) = aP;
+            A(i, i-1) = -aW;
+            b(i) = Su;
+        else
+            % Celdas interiores
+            aP = aW + aE;
+            A(i, i) = aP;
+            A(i, i-1) = -aW;
+            A(i, i+1) = -aE;
+            b(i) = 0;
+        end
+    end
+
+    % Resolver sistema lineal
+    phi = A \ b;
+end
+
+function phi = solucion_analitica(x, L, u, rho, Gamma, phi_A, phi_B)
+    % Solucion analitica de la ecuacion de conveccion-difusion 1D
+    % d(rho*u*phi)/dx = d/dx(Gamma * dphi/dx)
+    % con phi(0) = phi_A, phi(L) = phi_B
+
+    Pe = rho * u * L / Gamma;
+
+    if abs(Pe) < 1e-10
+        % Caso puramente difusivo
+        phi = phi_A + (phi_B - phi_A) * x / L;
     else
-        x_low = []; rho_low = []; p_low = []; U_low = [];
+        % Caso general conveccion-difusion
+        phi = phi_A + (phi_B - phi_A) * (exp(Pe * x / L) - 1) / (exp(Pe) - 1);
     end
 end
-
-%% FIGURA 1: Comparacion de perfiles con solucion analitica
-fprintf('\nGenerando figuras...\n');
-
-figure('Position', [100, 100, 1400, 450], 'Color', 'w');
-
-% Densidad
-subplot(1,3,1);
-plot(x_anal, rho_anal, 'k-', 'LineWidth', 2.5, 'DisplayName', 'Analitica');
-hold on;
-if ~isempty(x_high)
-    plot(x_high, rho_high, 'b-', 'LineWidth', 1.5, 'DisplayName', 'Alto orden (vanAlbada)');
-end
-if ~isempty(x_low)
-    plot(x_low, rho_low, 'r--', 'LineWidth', 1.5, 'DisplayName', 'Bajo orden (upwind)');
-end
-xlabel('$x/L$', 'Interpreter', 'latex', 'FontSize', 12);
-ylabel('$\rho / \rho_L$', 'Interpreter', 'latex', 'FontSize', 12);
-title('Densidad', 'Interpreter', 'latex', 'FontSize', 14);
-legend('Location', 'southwest', 'Interpreter', 'latex');
-grid on;
-xlim([0, 1]);
-
-% Presion
-subplot(1,3,2);
-plot(x_anal, p_anal, 'k-', 'LineWidth', 2.5, 'DisplayName', 'Analitica');
-hold on;
-if ~isempty(x_high)
-    plot(x_high, p_high, 'b-', 'LineWidth', 1.5, 'DisplayName', 'Alto orden');
-end
-if ~isempty(x_low)
-    plot(x_low, p_low, 'r--', 'LineWidth', 1.5, 'DisplayName', 'Bajo orden');
-end
-xlabel('$x/L$', 'Interpreter', 'latex', 'FontSize', 12);
-ylabel('$p / p_L$', 'Interpreter', 'latex', 'FontSize', 12);
-title('Presion', 'Interpreter', 'latex', 'FontSize', 14);
-legend('Location', 'southwest', 'Interpreter', 'latex');
-grid on;
-xlim([0, 1]);
-
-% Velocidad (normalizar respecto a velocidad del sonido izquierda)
-a_L = sqrt(gamma);  % Velocidad del sonido normalizada (p_L/rho_L = 1)
-subplot(1,3,3);
-plot(x_anal, U_anal, 'k-', 'LineWidth', 2.5, 'DisplayName', 'Analitica');
-hold on;
-if ~isempty(x_high)
-    % Normalizar velocidad: U_norm = U / a_L donde a_L = sqrt(gamma*p_L/rho_L)
-    a_L_dim = sqrt(gamma * 100000 / 1.0);  % ~374 m/s
-    plot(x_high, U_high / a_L_dim, 'b-', 'LineWidth', 1.5, 'DisplayName', 'Alto orden');
-end
-if ~isempty(x_low)
-    plot(x_low, U_low / a_L_dim, 'r--', 'LineWidth', 1.5, 'DisplayName', 'Bajo orden');
-end
-xlabel('$x/L$', 'Interpreter', 'latex', 'FontSize', 12);
-ylabel('$u / a_L$', 'Interpreter', 'latex', 'FontSize', 12);
-title('Velocidad', 'Interpreter', 'latex', 'FontSize', 14);
-legend('Location', 'northwest', 'Interpreter', 'latex');
-grid on;
-xlim([0, 1]);
-
-sgtitle('Tubo de Sod $t = 0.1$ s - Comparacion de esquemas numericos', ...
-    'Interpreter', 'latex', 'FontSize', 16);
-
-exportgraphics(gcf, [output_dir, 'shocktube_comparacion_esquemas.png'], 'Resolution', 300);
-fprintf('Guardada: shocktube_comparacion_esquemas.png\n');
-
-%% FIGURA 2: Detalle de las discontinuidades
-figure('Position', [100, 100, 1200, 800], 'Color', 'w');
-
-% Identificar regiones de interes
-% Onda de choque: aproximadamente en x ~ 0.85
-% Discontinuidad de contacto: aproximadamente en x ~ 0.68
-% Onda de expansion: x ~ 0.26 a 0.50
-
-% Detalle del choque
-subplot(2,2,1);
-idx_shock = x_anal > 0.75 & x_anal < 0.95;
-plot(x_anal(idx_shock), rho_anal(idx_shock), 'k-', 'LineWidth', 2.5);
-hold on;
-if ~isempty(x_high)
-    idx_h = x_high > 0.75 & x_high < 0.95;
-    plot(x_high(idx_h), rho_high(idx_h), 'b-', 'LineWidth', 1.5);
-end
-if ~isempty(x_low)
-    idx_l = x_low > 0.75 & x_low < 0.95;
-    plot(x_low(idx_l), rho_low(idx_l), 'r--', 'LineWidth', 1.5);
-end
-xlabel('$x/L$', 'Interpreter', 'latex');
-ylabel('$\rho / \rho_L$', 'Interpreter', 'latex');
-title('Detalle: Onda de Choque', 'Interpreter', 'latex', 'FontSize', 12);
-grid on;
-
-% Detalle de la discontinuidad de contacto
-subplot(2,2,2);
-idx_contact = x_anal > 0.60 & x_anal < 0.75;
-plot(x_anal(idx_contact), rho_anal(idx_contact), 'k-', 'LineWidth', 2.5);
-hold on;
-if ~isempty(x_high)
-    idx_h = x_high > 0.60 & x_high < 0.75;
-    plot(x_high(idx_h), rho_high(idx_h), 'b-', 'LineWidth', 1.5);
-end
-if ~isempty(x_low)
-    idx_l = x_low > 0.60 & x_low < 0.75;
-    plot(x_low(idx_l), rho_low(idx_l), 'r--', 'LineWidth', 1.5);
-end
-xlabel('$x/L$', 'Interpreter', 'latex');
-ylabel('$\rho / \rho_L$', 'Interpreter', 'latex');
-title('Detalle: Discontinuidad de Contacto', 'Interpreter', 'latex', 'FontSize', 12);
-grid on;
-
-% Detalle de la expansion
-subplot(2,2,3);
-idx_exp = x_anal > 0.20 & x_anal < 0.55;
-plot(x_anal(idx_exp), rho_anal(idx_exp), 'k-', 'LineWidth', 2.5);
-hold on;
-if ~isempty(x_high)
-    idx_h = x_high > 0.20 & x_high < 0.55;
-    plot(x_high(idx_h), rho_high(idx_h), 'b-', 'LineWidth', 1.5);
-end
-if ~isempty(x_low)
-    idx_l = x_low > 0.20 & x_low < 0.55;
-    plot(x_low(idx_l), rho_low(idx_l), 'r--', 'LineWidth', 1.5);
-end
-xlabel('$x/L$', 'Interpreter', 'latex');
-ylabel('$\rho / \rho_L$', 'Interpreter', 'latex');
-title('Detalle: Onda de Expansion', 'Interpreter', 'latex', 'FontSize', 12);
-grid on;
-
-% Leyenda comun
-subplot(2,2,4);
-axis off;
-h1 = plot(NaN, NaN, 'k-', 'LineWidth', 2.5); hold on;
-h2 = plot(NaN, NaN, 'b-', 'LineWidth', 1.5);
-h3 = plot(NaN, NaN, 'r--', 'LineWidth', 1.5);
-legend([h1, h2, h3], {'Solucion analitica', 'Alto orden (vanAlbada)', 'Bajo orden (upwind)'}, ...
-    'Location', 'best', 'FontSize', 14, 'Interpreter', 'latex');
-title('Leyenda', 'Interpreter', 'latex', 'FontSize', 12);
-
-sgtitle('Analisis de discontinuidades - Efecto del esquema numerico', ...
-    'Interpreter', 'latex', 'FontSize', 16);
-
-exportgraphics(gcf, [output_dir, 'shocktube_detalle_discontinuidades.png'], 'Resolution', 300);
-fprintf('Guardada: shocktube_detalle_discontinuidades.png\n');
-
-%% FIGURA 3: Diagrama x-t del problema (teorico)
-figure('Position', [100, 100, 800, 600], 'Color', 'w');
-
-% Parametros del problema de Sod normalizado
-gamma = 1.4;
-rho_L = 1.0; p_L = 1.0; u_L = 0;
-rho_R = 0.125; p_R = 0.1; u_R = 0;
-a_L = sqrt(gamma * p_L / rho_L);
-
-% Posiciones caracteristicas (solucion aproximada del problema de Riemann)
-t_max = 0.35;
-
-% Cabeza de la expansion (caracteristica mas rapida hacia la izquierda)
-x_head = @(t) 0.5 - a_L * t;
-
-% Cola de la expansion (aproximada)
-x_tail = @(t) 0.5 - 0.07 * t;  % Valor aproximado
-
-% Discontinuidad de contacto
-x_contact = @(t) 0.5 + 0.93 * t;  % u* aproximado
-
-% Onda de choque
-x_shock = @(t) 0.5 + 1.75 * t;  % W_s aproximado
-
-t_plot = linspace(0, t_max, 100);
-
-plot(x_head(t_plot), t_plot, 'b-', 'LineWidth', 2, 'DisplayName', 'Cabeza expansion');
-hold on;
-plot(x_tail(t_plot), t_plot, 'b--', 'LineWidth', 1.5, 'DisplayName', 'Cola expansion');
-plot(x_contact(t_plot), t_plot, 'g-', 'LineWidth', 2, 'DisplayName', 'Contacto');
-plot(x_shock(t_plot), t_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'Choque');
-
-% Linea de tiempo de simulacion
-yline(0.1, 'k--', 'LineWidth', 1.5, 'Label', '$t = 0.1$', 'Interpreter', 'latex', 'FontSize', 11);
-
-% Anotaciones de regiones
-text(0.15, 0.05, 'Estado 1 (L)', 'FontSize', 10, 'Interpreter', 'latex');
-text(0.38, 0.05, 'Expansion', 'FontSize', 10, 'Interpreter', 'latex');
-text(0.55, 0.05, 'Estado 2', 'FontSize', 10, 'Interpreter', 'latex');
-text(0.72, 0.05, 'Estado 3', 'FontSize', 10, 'Interpreter', 'latex');
-text(0.90, 0.05, 'Estado 4 (R)', 'FontSize', 10, 'Interpreter', 'latex');
-
-xlabel('$x/L$', 'Interpreter', 'latex', 'FontSize', 12);
-ylabel('$t$ [adimensional]', 'Interpreter', 'latex', 'FontSize', 12);
-title('Diagrama $x$-$t$ del tubo de choque de Sod', 'Interpreter', 'latex', 'FontSize', 14);
-legend('Location', 'northwest', 'Interpreter', 'latex');
-grid on;
-xlim([0, 1]);
-ylim([0, t_max]);
-
-exportgraphics(gcf, [output_dir, 'shocktube_diagrama_xt.png'], 'Resolution', 300);
-fprintf('Guardada: shocktube_diagrama_xt.png\n');
-
-%% FIGURA 4: Tabla de errores
-figure('Position', [100, 100, 700, 450], 'Color', 'w');
-axis off;
-
-% Calcular errores si hay datos
-if ~isempty(x_high) && ~isempty(x_low)
-    % Eliminar duplicados de la solución analítica
-    [x_anal_unique, ia] = unique(x_anal);
-    rho_anal_unique = rho_anal(ia);
-    p_anal_unique = p_anal(ia);
-
-    % Interpolar analitica a posiciones numericas
-    rho_anal_interp_h = interp1(x_anal_unique, rho_anal_unique, x_high, 'linear', 'extrap');
-    p_anal_interp_h = interp1(x_anal_unique, p_anal_unique, x_high, 'linear', 'extrap');
-
-    rho_anal_interp_l = interp1(x_anal_unique, rho_anal_unique, x_low, 'linear', 'extrap');
-    p_anal_interp_l = interp1(x_anal_unique, p_anal_unique, x_low, 'linear', 'extrap');
-
-    % Errores RMS (normalizados)
-    err_rho_high = sqrt(mean((rho_high - rho_anal_interp_h).^2)) / mean(abs(rho_anal_interp_h)) * 100;
-    err_rho_low = sqrt(mean((rho_low - rho_anal_interp_l).^2)) / mean(abs(rho_anal_interp_l)) * 100;
-
-    err_p_high = sqrt(mean((p_high - p_anal_interp_h).^2)) / mean(abs(p_anal_interp_h)) * 100;
-    err_p_low = sqrt(mean((p_low - p_anal_interp_l).^2)) / mean(abs(p_anal_interp_l)) * 100;
-else
-    % Valores representativos si no hay datos
-    err_rho_high = 2.5; err_rho_low = 8.2;
-    err_p_high = 1.8; err_p_low = 6.5;
-end
-
-text(0.5, 0.92, '\textbf{Errores RMS respecto a solucion analitica}', ...
-    'Interpreter', 'latex', 'FontSize', 16, 'HorizontalAlignment', 'center');
-
-% Encabezados
-text(0.15, 0.75, '\textbf{Variable}', 'Interpreter', 'latex', 'FontSize', 13);
-text(0.45, 0.75, '\textbf{Alto orden (\%)}', 'Interpreter', 'latex', 'FontSize', 13);
-text(0.75, 0.75, '\textbf{Bajo orden (\%)}', 'Interpreter', 'latex', 'FontSize', 13);
-
-% Linea separadora
-line([0.1, 0.9], [0.70, 0.70], 'Color', 'k', 'LineWidth', 1);
-
-% Datos
-text(0.15, 0.60, '$\rho$', 'Interpreter', 'latex', 'FontSize', 13);
-text(0.45, 0.60, sprintf('%.2f', err_rho_high), 'FontSize', 13, 'HorizontalAlignment', 'center');
-text(0.75, 0.60, sprintf('%.2f', err_rho_low), 'FontSize', 13, 'HorizontalAlignment', 'center');
-
-text(0.15, 0.48, '$p$', 'Interpreter', 'latex', 'FontSize', 13);
-text(0.45, 0.48, sprintf('%.2f', err_p_high), 'FontSize', 13, 'HorizontalAlignment', 'center');
-text(0.75, 0.48, sprintf('%.2f', err_p_low), 'FontSize', 13, 'HorizontalAlignment', 'center');
-
-% Observaciones
-text(0.5, 0.28, '\textit{Observaciones:}', 'Interpreter', 'latex', 'FontSize', 12, ...
-    'HorizontalAlignment', 'center');
-text(0.5, 0.18, 'El esquema de alto orden (vanAlbada) reduce significativamente', ...
-    'Interpreter', 'latex', 'FontSize', 11, 'HorizontalAlignment', 'center');
-text(0.5, 0.10, 'la difusion numerica en las discontinuidades.', ...
-    'Interpreter', 'latex', 'FontSize', 11, 'HorizontalAlignment', 'center');
-
-exportgraphics(gcf, [output_dir, 'shocktube_tabla_errores.png'], 'Resolution', 300);
-fprintf('Guardada: shocktube_tabla_errores.png\n');
-
-%% Guardar datos
-if ~isempty(x_high) && ~isempty(x_low)
-    save([output_dir, 'resultados_ejercicio4_parte2.mat'], ...
-        'x_anal', 'rho_anal', 'p_anal', 'U_anal', ...
-        'x_high', 'rho_high', 'p_high', 'U_high', ...
-        'x_low', 'rho_low', 'p_low', 'U_low', ...
-        'err_rho_high', 'err_rho_low', 'err_p_high', 'err_p_low');
-end
-
-fprintf('\n=== EJERCICIO 4 PARTE 2 COMPLETADO ===\n');
-fprintf('Figuras guardadas en: %s\n', output_dir);

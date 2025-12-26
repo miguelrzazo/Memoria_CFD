@@ -272,16 +272,27 @@ La Fig.~\ref{fig:Gamma_VLM} presenta la distribución de circulación a lo largo
 
 \subsection{Distribución del coeficiente de presión}
 
-La Fig.~\ref{fig:Cp_VLM} muestra la distribución del coeficiente de presión a lo largo de la envergadura.
+La Fig.~\ref{fig:Cp_completa_VLM} presenta una análisis detallado de la distribución del coeficiente de presión $C_p$ a lo largo de la envergadura para diferentes ángulos de ataque. La gráfica se organiza en tres subfiguras dispuestas en formato 3×1 para facilitar la comparación entre las componentes de la configuración tándem.
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[width=\textwidth]{Ejercicio3/Cp_distribucion.png}
-    \caption{Distribución del coeficiente de presión $C_p$ a lo largo de la envergadura para diferentes ángulos de ataque.}
-    \label{fig:Cp_VLM}
+    \includegraphics[width=\textwidth]{Ejercicio3/Cp_distribucion_completa.png}
+    \caption{Distribución del coeficiente de presión $C_p$ a lo largo de la envergadura. (a) Ala principal, (b) Ala trasera, (c) Configuración completa. Los diferentes colores representan distintos ángulos de ataque $\alpha$, mientras que los tipos de línea distinguen entre ambas alas en el caso conjunto.}
+    \label{fig:Cp_completa_VLM}
+\end{figure}
 \end{figure}
 
-El coeficiente de presión muestra valores más negativos (mayor succión) a ángulos de ataque elevados, consistente con el aumento de sustentación. La distribución spanwise refleja los efectos de la geometría del ala (flecha y estrechamiento).
+\textbf{Análisis de la distribución de presiones:}
+
+\begin{enumerate}
+    \item \textbf{Ala principal (Fig.~\ref{fig:Cp_completa_VLM}a):} La distribución de $C_p$ muestra el comportamiento característico de un ala con flecha y torsión. A ángulos de ataque bajos ($\alpha = -5^\circ$), se observa succión moderada en la región central del ala, con valores de $C_p$ alrededor de $-0.5$. A medida que aumenta el ángulo de ataque, la succión máxima se incrementa significativamente, alcanzando valores de $C_p \approx -2.5$ a $\alpha = 10^\circ$. La distribución spanwise refleja los efectos de la flecha positiva, con una ligera disminución de la succión hacia las puntas debido al \textit{washout} inducido.
+
+    \item \textbf{Ala trasera (Fig.~\ref{fig:Cp_completa_VLM}b):} La distribución de presiones del ala trasera es notablemente diferente debido a los efectos de interferencia aerodinámica. A ángulos de ataque bajos ($\alpha \leq 0^\circ$), se observa una distribución de presiones invertida (presión positiva en la superficie superior), correspondiente a sustentación negativa. Este comportamiento se debe al \textit{downwash} inducido por el ala principal, que supera al ángulo de ataque geométrico. A ángulos elevados ($\alpha \geq 5^\circ$), la distribución se normaliza, mostrando succión en la superficie superior con valores de $C_p$ mínimos alrededor de $-1.5$.
+
+    \item \textbf{Configuración completa (Fig.~\ref{fig:Cp_completa_VLM}c):} La subfigura inferior combina ambas alas en un único gráfico, utilizando líneas continuas para el ala principal y líneas discontinuas para el ala trasera. Esta representación permite apreciar directamente los efectos de interferencia: el ala trasera opera en condiciones de flujo perturbado por el ala principal, resultando en distribuciones de presión asimétricas y efectos de interacción complejos. Los diferentes colores permiten seguir la evolución de las distribuciones con el ángulo de ataque para ambas superficies simultáneamente.
+\end{enumerate}
+
+La evolución de las distribuciones de presión con el ángulo de ataque refleja claramente los mecanismos físicos subyacentes: el aumento de la velocidad local en la superficie superior (principio de Bernoulli) genera succión creciente, mientras que los efectos de interferencia modifican significativamente el comportamiento del ala trasera. Esta información es crucial para el diseño de flaps, slats y otras superficies de control de alta sustentación.
 
 \subsection{Resumen de coeficientes aerodinámicos}
 
@@ -309,7 +320,7 @@ La Fig.~\ref{fig:geometria_VLM} muestra la malla de paneles utilizada en el aná
 
 La Tabla~\ref{tab:resultados_ej3} presenta los valores numéricos de los coeficientes aerodinámicos para cada ángulo de ataque analizado.
 
-\begin{table}[htbp]
+\begin{table}[h!]
     \centering
     \caption{Coeficientes aerodinámicos de la configuración tándem calculados mediante VLM.}
     \label{tab:resultados_ej3}

@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  openfoam:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: memoria-cfd-openfoam:13
+    container_name: memoria_cfd_openfoam
+    user: "1000:1000"  # Ensures #calc works in blockMeshDict
+    volumes:
+      - ../:/home/openfoam/work:rw
+    working_dir: /home/openfoam/work
+    stdin_open: true
+    tty: true
+    environment:
+      - DISPLAY=${DISPLAY}
+    networks:
+      - openfoam-net
+
+networks:
+  openfoam-net:
+    driver: bridge

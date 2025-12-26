@@ -20,6 +20,11 @@ if ~exist(fig_dir, 'dir')
     mkdir(fig_dir);
 end
 
+% Configurar interprete LaTeX para todas las figuras
+set(groot,'defaulttextinterpreter','latex');
+set(groot,'defaultLegendInterpreter','latex');
+set(groot,'defaultAxesTickLabelInterpreter','latex');
+
 %% 1. DEFINICION DEL PERFIL
 % Coordenadas del perfil proporcionadas en el enunciado (originales)
 

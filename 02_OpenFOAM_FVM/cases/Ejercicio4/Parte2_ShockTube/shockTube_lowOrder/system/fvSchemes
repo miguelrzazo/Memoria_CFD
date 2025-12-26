@@ -28,7 +28,6 @@ divSchemes
 {
     default             none;
 
-    // Esquemas de BAJO ORDEN (upwind para todo)
     div(phi,U)          Gauss upwind;
     div(phid,p)         Gauss upwind;
     div(phi,e)          Gauss upwind;

@@ -1,10 +1,5 @@
 %% EJERCICIO 2: METODO DE MULTHOPP PARA ALAS RECTAS
-% Dinamica de Fluidos Computacional
-% Calculo de coeficientes aerodinamicos mediante el metodo de Multhopp
-%
-% Este metodo se basa en la teoria de la linea sustentadora de Prandtl
-% y permite calcular la distribucion de sustentacion considerando
-% variaciones en la geometria del ala.
+% Master en Ingenieria Aeronautica - Universidad de Leon
 
 clearvars; close all; clc;
 
@@ -20,6 +15,11 @@ end
 
 % Configuracion para fondo blanco
 set(0, 'DefaultFigureColor', 'w');
+
+% Configurar interprete LaTeX para todas las figuras
+set(groot,'defaulttextinterpreter','latex');
+set(groot,'defaultLegendInterpreter','latex');
+set(groot,'defaultAxesTickLabelInterpreter','latex');
 
 %% DATOS DEL PROBLEMA
 % Geometria del ala

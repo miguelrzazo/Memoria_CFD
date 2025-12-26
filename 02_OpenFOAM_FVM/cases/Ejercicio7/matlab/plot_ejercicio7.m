@@ -1,7 +1,5 @@
 %% EJERCICIO 7: ANALISIS TRANSITORIO - CILINDRO
-% Dinamica de Fluidos Computacional
-% Analisis de coeficientes aerodinamicos y numero de Strouhal
-%
+
 % Reynolds = 200 + 7*50 = 550 (ultima cifra DNI = 7)
 
 clearvars; close all; clc;
