@@ -124,6 +124,12 @@ Desktop.ini
 .vscode/settings.json
 .idea/
 
+# Claude AI configuration
+.claude/
+
+# GitHub-specific instructions (local setup)
+.github/
+
 # Temporary files
 *~
 *.tmp
@@ -137,3 +143,6 @@ Desktop.ini
 # *.png
 # *.pdf
 # *.vtk
+TODO.md
+.gitignore
+Ejercicio 4 parte2.md

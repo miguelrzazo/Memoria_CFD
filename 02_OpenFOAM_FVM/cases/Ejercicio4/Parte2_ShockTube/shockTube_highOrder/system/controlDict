@@ -22,13 +22,18 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         0.15;
+// Tiempo adimensional: t* = t * a_L / L
+// a_L = sqrt(1.4 * 100000 / 1.0) = 374.17 m/s, L = 10 m
+// t* = 0.15 -> t = 0.00401 s; t* = 0.25 -> t = 0.00668 s
+endTime         0.007;
 
-deltaT          1e-6;
+// Time step increased to make temporal scheme differences visible
+// Courant ~ 0.4 for shock speed ~500 m/s and dx = 0.01 m
+deltaT          1e-5;
 
 writeControl    runTime;
 
-writeInterval   0.01;
+writeInterval   0.0005;
 
 purgeWrite      0;
 

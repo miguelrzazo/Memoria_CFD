@@ -1,54 +1,54 @@
 %========================================
 % CAPITULO 1: METODO DE PANELES HESS-SMITH
 %========================================
-\chapter{Aerodinámica de Perfiles: Método de Paneles Hess-Smith}
+\chapter{Aerodin\'amica de Perfiles: M\'etodo de Paneles Hess-Smith}
 \label{chap:ejercicio1}
 
 %========================================
-\section{Introducción}
+\section{Introducci\'on}
 %========================================
 
-El análisis aerodinámico de perfiles bidimensionales constituye el primer paso fundamental en el diseño de superficies sustentadoras. Antes del desarrollo de la dinámica de fluidos computacional (CFD), los métodos de paneles representaban el estado del arte para el cálculo de flujos potenciales alrededor de geometrías arbitrarias~\cite{katz2001low}.
+El an\'alisis aerodin\'amico de perfiles bidimensionales constituye el primer paso fundamental en el dise\~no de superficies sustentadoras. Antes del desarrollo de la din\'amica de fluidos computacional (CFD), los m\'etodos de paneles representaban el estado del arte para el c\'alculo de flujos potenciales alrededor de geometr\'ias arbitrarias~\cite{katz2001low}.
 
-El método de Hess-Smith, desarrollado en la década de 1960, combina distribuciones de manantiales (fuentes) y torbellinos sobre la superficie del cuerpo para resolver el problema del flujo potencial bidimensional. A diferencia de otros métodos de paneles que utilizan solo una singularidad, la combinación de ambas permite satisfacer simultáneamente la condición de no penetración en cada panel y la condición de Kutta en el borde de salida, garantizando una solución físicamente realista con circulación finita.
+El m\'etodo de Hess-Smith, desarrollado en la d\'ecada de 1960, combina distribuciones de manantiales (fuentes) y torbellinos sobre la superficie del cuerpo para resolver el problema del flujo potencial bidimensional. A diferencia de otros m\'etodos de paneles que utilizan solo una singularidad, la combinaci\'on de ambas permite satisfacer simult\'aneamente la condici\'on de no penetraci\'on en cada panel y la condici\'on de Kutta en el borde de salida, garantizando una soluci\'on f\'isicamente realista con circulaci\'on finita.
 
-Este método presenta las siguientes características fundamentales~\cite{hess1967calculation,anderson2010fundamentals}:
+Este m\'etodo presenta las siguientes caracter\'isticas fundamentales~\cite{hess1967calculation,anderson2010fundamentals}:
 \begin{itemize}
-    \item \textbf{Flujo potencial:} Se asume fluido incompresible, no viscoso e irrotacional, lo que permite la aplicación del principio de superposición de soluciones elementales.
+    \item \textbf{Flujo potencial:} Se asume fluido incompresible, no viscoso e irrotacional, lo que permite la aplicaci\'on del principio de superposici\'on de soluciones elementales.
 
-    \item \textbf{Discretización de superficie:} El perfil se divide en $N$ paneles rectos, sobre los cuales se distribuyen las singularidades con intensidad constante.
+    \item \textbf{Discretizaci\'on de superficie:} El perfil se divide en $N$ paneles rectos, sobre los cuales se distribuyen las singularidades con intensidad constante.
 
-    \item \textbf{Condición de Kutta:} Se impone que el flujo abandone suavemente el borde de salida, lo que determina la circulación total y, por tanto, la sustentación.
+    \item \textbf{Condici\'on de Kutta:} Se impone que el flujo abandone suavemente el borde de salida, lo que determina la circulaci\'on total y, por tanto, la sustentaci\'on.
 
-    \item \textbf{Validez:} Los resultados son aplicables en régimen subsónico con flujo adherido, donde los efectos viscosos son despreciables excepto en una capa límite delgada.
+    \item \textbf{Validez:} Los resultados son aplicables en r\'egimen subs\'onico con flujo adherido, donde los efectos viscosos son despreciables excepto en una capa l\'imite delgada.
 \end{itemize}
 
-La teoría de perfiles delgados predice una pendiente de sustentación $dC_L/d\alpha = 2\pi$ rad$^{-1}$ para cualquier perfil en flujo potencial bidimensional. El método de Hess-Smith, al resolver numéricamente el problema completo sin las aproximaciones de perfil delgado, debe aproximarse a este valor teórico, constituyendo una validación fundamental de la implementación.
+La teor\'ia de perfiles delgados predice una pendiente de sustentaci\'on $dC_L/d\alpha = 2\pi$ rad$^{-1}$ para cualquier perfil en flujo potencial bidimensional. El m\'etodo de Hess-Smith, al resolver num\'ericamente el problema completo sin las aproximaciones de perfil delgado, debe aproximarse a este valor te\'orico, constituyendo una validaci\'on fundamental de la implementaci\'on.
 
 %========================================
-\section{Fundamento Teórico}
+\section{Fundamento Te\'orico}
 %========================================
 
 \subsection{Ecuaciones de gobierno}
 
-Para flujo potencial incompresible e irrotacional, el campo de velocidades deriva de un potencial de velocidad $\phi$ que satisface la ecuación de Laplace:
+Para flujo potencial incompresible e irrotacional, el campo de velocidades deriva de un potencial de velocidad $\phi$ que satisface la ecuaci\'on de Laplace:
 \begin{equation}
     \nabla^2 \phi = 0
     \label{eq:laplace}
 \end{equation}
 
-La linealidad de esta ecuación permite construir la solución mediante superposición de singularidades elementales:
+La linealidad de esta ecuaci\'on permite construir la soluci\'on mediante superposici\'on de singularidades elementales:
 \begin{equation}
     \phi = \phi_\infty + \sum_{j=1}^{N} \phi_{q_j} + \phi_\gamma
 \end{equation}
-donde $\phi_\infty$ es el potencial de la corriente uniforme, $\phi_{q_j}$ es la contribución de los manantiales en cada panel, y $\phi_\gamma$ es la contribución de los torbellinos.
+donde $\phi_\infty$ es el potencial de la corriente uniforme, $\phi_{q_j}$ es la contribuci\'on de los manantiales en cada panel, y $\phi_\gamma$ es la contribuci\'on de los torbellinos.
 
-\subsection{Distribución de singularidades}
+\subsection{Distribuci\'on de singularidades}
 
-En el método de Hess-Smith, cada panel $j$ tiene:
+En el m\'etodo de Hess-Smith, cada panel $j$ tiene:
 \begin{itemize}
-    \item Una distribución de \textbf{manantiales} de intensidad $q_j$ (variable para cada panel)
-    \item Una distribución de \textbf{torbellinos} de intensidad $\gamma$ (constante para todos los paneles)
+    \item Una distribuci\'on de \textbf{manantiales} de intensidad $q_j$ (variable para cada panel)
+    \item Una distribuci\'on de \textbf{torbellinos} de intensidad $\gamma$ (constante para todos los paneles)
 \end{itemize}
 
 La velocidad inducida por un manantial distribuido sobre un panel de longitud $l_j$ en un punto $P$ ubicado a distancias $r_1$ y $r_2$ de los extremos del panel es:
@@ -57,7 +57,7 @@ La velocidad inducida por un manantial distribuido sobre un panel de longitud $l
     w_q = \frac{q_j}{2\pi} (\theta_2 - \theta_1)
 \end{equation}
 
-Análogamente, para el torbellino:
+An\'alogamente, para el torbellino:
 \begin{equation}
     u_\gamma = -\frac{\gamma}{2\pi} (\theta_2 - \theta_1), \quad
     w_\gamma = \frac{\gamma}{2\pi} \ln\left(\frac{r_2}{r_1}\right)
@@ -67,15 +67,15 @@ Análogamente, para el torbellino:
 
 Se imponen dos tipos de condiciones:
 
-\textbf{Condición de no penetración:} La componente normal de la velocidad debe ser nula en cada punto de control (centro del panel):
+\textbf{Condici\'on de no penetraci\'on:} La componente normal de la velocidad debe ser nula en cada punto de control (centro del panel):
 \begin{equation}
     \vec{V} \cdot \vec{n}_i = 0 \quad \forall i = 1, \ldots, N
     \label{eq:no_penetracion}
 \end{equation}
 
-Esta condición genera $N$ ecuaciones lineales con $N+1$ incógnitas ($q_1, \ldots, q_N, \gamma$).
+Esta condici\'on genera $N$ ecuaciones lineales con $N+1$ inc\'ognitas ($q_1, \ldots, q_N, \gamma$).
 
-\textbf{Condición de Kutta:} Para cerrar el sistema y garantizar que el flujo abandone suavemente el borde de salida, se impone que las velocidades tangenciales en los paneles adyacentes al borde de salida sean iguales en magnitud pero opuestas en signo:
+\textbf{Condici\'on de Kutta:} Para cerrar el sistema y garantizar que el flujo abandone suavemente el borde de salida, se impone que las velocidades tangenciales en los paneles adyacentes al borde de salida sean iguales en magnitud pero opuestas en signo:
 \begin{equation}
     V_{t,\text{sup}} + V_{t,\text{inf}} = 0
     \label{eq:kutta}
@@ -87,25 +87,25 @@ El sistema resultante tiene la forma matricial:
 \begin{equation}
     [A]_{(N+1) \times (N+1)} \begin{Bmatrix} q_1 \\ \vdots \\ q_N \\ \gamma \end{Bmatrix} = \begin{Bmatrix} b_1 \\ \vdots \\ b_N \\ b_{N+1} \end{Bmatrix}
 \end{equation}
-donde los coeficientes $A_{ij}$ representan la influencia del panel $j$ sobre el punto de control $i$, y $b_i = -\vec{V}_\infty \cdot \vec{n}_i$ para las ecuaciones de no penetración.
+donde los coeficientes $A_{ij}$ representan la influencia del panel $j$ sobre el punto de control $i$, y $b_i = -\vec{V}_\infty \cdot \vec{n}_i$ para las ecuaciones de no penetraci\'on.
 
-\subsection{Coeficientes aerodinámicos}
+\subsection{Coeficientes aerodin\'amicos}
 
-Una vez resuelto el sistema, se calculan los coeficientes aerodinámicos:
+Una vez resuelto el sistema, se calculan los coeficientes aerodin\'amicos:
 
-\textbf{Coeficiente de presión:}
+\textbf{Coeficiente de presi\'on:}
 \begin{equation}
     C_p = 1 - \left(\frac{V_t}{U_\infty}\right)^2
     \label{eq:cp}
 \end{equation}
 donde $V_t$ es la velocidad tangencial en cada panel.
 
-\textbf{Coeficiente de sustentación:} Mediante el teorema de Kutta-Joukowski:
+\textbf{Coeficiente de sustentaci\'on:} Mediante el teorema de Kutta-Joukowski:
 \begin{equation}
     C_L = \frac{2\Gamma}{U_\infty \, c}
     \label{eq:cl}
 \end{equation}
-donde $\Gamma$ es la circulación total alrededor del perfil.
+donde $\Gamma$ es la circulaci\'on total alrededor del perfil.
 
 \textbf{Coeficiente de momento:} Respecto al borde de ataque:
 \begin{equation}
@@ -120,94 +120,94 @@ Respecto al cuarto de cuerda:
 \end{equation}
 
 %========================================
-\section{Implementación y Configuración}
+\section{Implementaci\'on y Configuraci\'on}
 %========================================
 
-\subsection{Geometría del perfil}
+\subsection{Geometr\'ia del perfil}
 
-Las coordenadas del perfil fueron proporcionadas en el enunciado del ejercicio, con 17 puntos definidos tanto para el extradós como para el intradós. El perfil presenta las siguientes características geométricas:
+Las coordenadas del perfil fueron proporcionadas en el enunciado del ejercicio, con 17 puntos definidos tanto para el extrad\'os como para el intrad\'os. El perfil presenta las siguientes caracter\'isticas geom\'etricas:
 
 \begin{itemize}
     \item Cuerda: $c = 1.0$ (normalizada)
-    \item Espesor máximo: aproximadamente $12\%$ de la cuerda
-    \item Curvatura positiva: genera sustentación a ángulo de ataque nulo
+    \item Espesor m\'aximo: aproximadamente $12\%$ de la cuerda
+    \item Curvatura positiva: genera sustentaci\'on a \'angulo de ataque nulo
 \end{itemize}
 
-\subsection{Discretización en paneles}
+\subsection{Discretizaci\'on en paneles}
 
-Para cumplir el requisito de al menos 40 paneles, se implementó una interpolación con distribución coseno que proporciona mayor densidad de paneles cerca del borde de ataque y de salida, donde los gradientes de presión son más pronunciados:
+Para cumplir el requisito de al menos 40 paneles, se implement\'o una interpolaci\'on con distribuci\'on coseno que proporciona mayor densidad de paneles cerca del borde de ataque y de salida, donde los gradientes de presi\'on son m\'as pronunciados:
 
 \begin{equation}
     x_i = \frac{c}{2}\left(1 - \cos\left(\frac{i\pi}{N_{\text{pts}}}\right)\right), \quad i = 0, 1, \ldots, N_{\text{pts}}
 \end{equation}
 
-La configuración final utiliza es:
+La configuraci\'on final utiliza es:
 \begin{itemize}
-    \item 41 puntos por lado (extradós e intradós)
-    \item 80 paneles totales (40 en extradós + 40 en intradós)
-    \item Distribución coseno para refinamiento en bordes
+    \item 41 puntos por lado (extrad\'os e intrad\'os)
+    \item 80 paneles totales (40 en extrad\'os + 40 en intrad\'os)
+    \item Distribuci\'on coseno para refinamiento en bordes
 \end{itemize}
 
-\subsection{Parámetros de simulación}
+\subsection{Par\'ametros de simulaci\'on}
 
 \begin{itemize}
     \item Velocidad de corriente libre: $U_\infty = 20$ m/s
-    \item Rango de ángulos de ataque: $\alpha = -10^\circ$ a $25^\circ$ con incremento de $1^\circ$
-    \item Total de casos analizados: 36 ángulos de ataque
+    \item Rango de \'angulos de ataque: $\alpha = -10^{\circ}$ a $25^{\circ}$ con incremento de $1^{\circ}$
+    \item Total de casos analizados: 36 \'angulos de ataque
 \end{itemize}
 
 %========================================
-\section{Resultados y Análisis}
+\section{Resultados y An\'alisis}
 %========================================
 
-\subsection{Discretización del perfil y validación geométrica}
+\subsection{Discretizaci\'on del perfil y validaci\'on geom\'etrica}
 
-La Fig.~\ref{fig:perfil_paneles_ej1} muestra el perfil aerodinámico discretizado en 80 paneles, con los puntos de control (centros de panel) marcados. Se observa claramente la mayor densidad de paneles cerca del borde de ataque, proporcionada por la distribución coseno.
+La Fig.~\ref{fig:perfil_paneles_ej1} muestra el perfil aerodin\'amico discretizado en 80 paneles, con los puntos de control (centros de panel) marcados. Se observa claramente la mayor densidad de paneles cerca del borde de ataque, proporcionada por la distribuci\'on coseno.
 
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.90\textwidth]{Ejercicio1/perfil_paneles.png}
-    \caption{Perfil aerodinámico discretizado con 80 paneles y puntos de control. La distribución coseno proporciona mayor resolución en el borde de ataque y de salida.}
+    \caption{Perfil aerodin\'amico discretizado con 80 paneles y puntos de control. La distribuci\'on coseno proporciona mayor resoluci\'on en el borde de ataque y de salida.}
     \label{fig:perfil_paneles_ej1}
 \end{figure}
 
-\textbf{Análisis:} La discretización cumple ampliamente el requisito mínimo de 40 paneles (se utilizaron 80 paneles totales, 40 por superficie). La distribución coseno concentra paneles en las zonas críticas donde los gradientes de presión son más pronunciados, optimizando la precisión del método para un número dado de paneles.
+\textbf{An\'alisis:} La discretizaci\'on cumple ampliamente el requisito m\'inimo de 40 paneles (se utilizaron 80 paneles totales, 40 por superficie). La distribuci\'on coseno concentra paneles en las zonas cr\'iticas donde los gradientes de presi\'on son m\'as pronunciados, optimizando la precisi\'on del m\'etodo para un n\'umero dado de paneles.
 
-\subsection{Distribución del coeficiente de presión $C_p$}
+\subsection{Distribuci\'on del coeficiente de presi\'on $C_p$}
 
-La Fig.~\ref{fig:Cp_distribucion_ej1} presenta la distribución del coeficiente de presión $C_p$ sobre el perfil para varios ángulos de ataque representativos ($\alpha = 0^\circ, 5^\circ, 10^\circ, 15^\circ$).
+La Fig.~\ref{fig:Cp_distribucion_ej1} presenta la distribuci\'on del coeficiente de presi\'on $C_p$ sobre el perfil para varios \'angulos de ataque representativos ($\alpha = 0^\circ, 5^\circ, 10^\circ, 15^\circ$).
 
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.95\textwidth]{Ejercicio1/Cp_distribucion.png}
-    \caption{Distribución del coeficiente de presión $C_p$ sobre el perfil para diferentes ángulos de ataque. Líneas sólidas: extradós; líneas discontinuas: intradós. El eje $C_p$ está invertido siguiendo la convención aeronáutica.}
+    \caption{Distribuci\'on del coeficiente de presi\'on $C_p$ sobre el perfil para diferentes \'angulos de ataque. L\'ineas s\'olidas: extrad\'os; l\'ineas discontinuas: intrad\'os. El eje $C_p$ est\'a invertido siguiendo la convenci\'on aeron\'autica.}
     \label{fig:Cp_distribucion_ej1}
 \end{figure}
 
-\textbf{Análisis:} Las distribuciones obtenidas muestran comportamiento físico coherente:
+\textbf{An\'alisis:} Las distribuciones obtenidas muestran comportamiento f\'isico coherente:
 \begin{itemize}
-    \item \textbf{Punto de estancamiento:} En el borde de ataque, $C_p \approx 1$ donde la velocidad es nula, confirmando la correcta implementación de la condición de no penetración.
-    \item \textbf{Succión en extradós:} Los valores negativos de $C_p$ indican velocidades superiores a $U_\infty$, generando la succión que produce sustentación. El pico de succión se localiza cerca del borde de ataque y se intensifica con el ángulo de ataque.
-    \item \textbf{Efecto del ángulo de ataque:} Al aumentar $\alpha$, la diferencia de presión entre extradós e intradós se incrementa proporcionalmente, lo que explica el aumento lineal de la sustentación observado.
-    \item \textbf{Recuperación de presión:} Hacia el borde de salida, las presiones se recuperan gradualmente, con valores ligeramente superiores en el intradós debido al efecto de la curvatura del perfil.
+    \item \textbf{Punto de estancamiento:} En el borde de ataque, $C_p \approx 1$ donde la velocidad es nula, confirmando la correcta implementaci\'on de la condici\'on de no penetraci\'on.
+    \item \textbf{Succi\'on en extrad\'os:} Los valores negativos de $C_p$ indican velocidades superiores a $U_\infty$, generando la succi\'on que produce sustentaci\'on. El pico de succi\'on se localiza cerca del borde de ataque y se intensifica con el \'angulo de ataque.
+    \item \textbf{Efecto del \'angulo de ataque:} Al aumentar $\alpha$, la diferencia de presi\'on entre extrad\'os e intrad\'os se incrementa proporcionalmente, lo que explica el aumento lineal de la sustentaci\'on observado.
+    \item \textbf{Recuperaci\'on de presi\'on:} Hacia el borde de salida, las presiones se recuperan gradualmente, con valores ligeramente superiores en el intrad\'os debido al efecto de la curvatura del perfil.
 \end{itemize}
 
-\subsection{Coeficiente de sustentación $C_L$ vs ángulo de ataque $\alpha$}
+\subsection{Coeficiente de sustentaci\'on $C_L$ vs \'angulo de ataque $\alpha$}
 
-La Fig.~\ref{fig:CL_vs_alpha_ej1} presenta la variación del coeficiente de sustentación con el ángulo de ataque.
+La Fig.~\ref{fig:CL_vs_alpha_ej1} presenta la variaci\'on del coeficiente de sustentaci\'on con el \'angulo de ataque.
 
 \begin{figure}[H!]
     \centering
     \includegraphics[width=0.85\textwidth]{Ejercicio1/CL_vs_alpha.png}
-    \caption{Coeficiente de sustentación $C_L$ en función del ángulo de ataque $\alpha$.}
+    \caption{Coeficiente de sustentaci\'on $C_L$ en funci\'on del \'angulo de ataque $\alpha$.}
     \label{fig:CL_vs_alpha_ej1}
 \end{figure}
 
-\textbf{Análisis:} La curva $C_L$ vs $\alpha$ presenta linealidad en todo el rango analizado ($-10^\circ$ a $25^\circ$), característico del flujo potencial que no captura el desprendimiento de la capa límite. El ángulo de sustentación nula determinado es $\alpha_{L=0} \approx -4.3^\circ$, valor negativo que indica que el perfil genera sustentación positiva incluso a ángulo de ataque nulo debido a su curvatura (camber). A $\alpha = 0^\circ$, se obtiene $C_L(0^\circ) \approx 0.065$, confirmando cuantitativamente el efecto de la curvatura del perfil.
+\textbf{An\'alisis:} La curva $C_L$ vs $\alpha$ presenta linealidad en todo el rango analizado ($-10^{\circ}$ a $25^{\circ}$), caracter\'istico del flujo potencial que no captura el desprendimiento de la capa l\'imite. El \'angulo de sustentaci\'on nula determinado es $\alpha_{L=0} \approx -4.3^{\circ}$, valor negativo que indica que el perfil genera sustentaci\'on positiva incluso a \'angulo de ataque nulo debido a su curvatura (camber). A $\alpha = 0^{\circ}$, se obtiene $C_L(0^{\circ}) \approx 0.065$, confirmando cuantitativamente el efecto de la curvatura del perfil.
 
 \subsection{Coeficientes de momento $C_M$}
 
-Las Figs.~\ref{fig:CM0_vs_alpha_ej1} y~\ref{fig:CMc4_vs_alpha_ej1} muestran la variación de los coeficientes de momento respecto al borde de ataque ($C_{M,O}$) y respecto al cuarto de cuerda ($C_{M,c/4}$).
+Las Figs.~\ref{fig:CM0_vs_alpha_ej1} y~\ref{fig:CMc4_vs_alpha_ej1} muestran la variaci\'on de los coeficientes de momento respecto al borde de ataque ($C_{M,O}$) y respecto al cuarto de cuerda ($C_{M,c/4}$).
 
 \begin{figure}[H!]
     \centering
@@ -226,20 +226,21 @@ Las Figs.~\ref{fig:CM0_vs_alpha_ej1} y~\ref{fig:CMc4_vs_alpha_ej1} muestran la v
     \end{minipage}
 \end{figure}
 
-\textbf{Análisis:} Los resultados muestran:
+\textbf{An\'alisis:} Los resultados muestran:
 \begin{itemize}
-    \item \textbf{Momento respecto al borde de ataque:} $C_{M,O}$ varía significativamente con $\alpha$, pasando de valores positivos a bajos ángulos ($0.0135$ a $\alpha = -10^\circ$) a valores negativos a ángulos altos ($-0.0329$ a $\alpha = 25^\circ$), reflejando el cambio en la distribución de presiones.
-    \item \textbf{Momento respecto a $c/4$:} $C_{M,c/4}$ presenta una variación más moderada y aproximadamente constante para ángulos bajos (alrededor de $0.05-0.06$), confirmando que el centro aerodinámico se encuentra próximo al cuarto de cuerda, como predice la teoría de perfiles delgados para flujo potencial.
-    \item \textbf{Consistencia física:} Los valores obtenidos son coherentes con perfiles de curvatura moderada y espesor finito, donde el centro aerodinámico se desplaza ligeramente hacia atrás del cuarto de cuerda debido al espesor.
+    \item \textbf{Momento respecto al borde de ataque:} $C_{M,O}$ var\'ia significativamente con $\alpha$, pasando de valores positivos a bajos \'angulos ($0.0135$ a $\alpha = -10^\circ$) a valores negativos a \'angulos altos ($-0.0329$ a $\alpha = 25^\circ$), reflejando el cambio en la distribuci\'on de presiones.
+    \item \textbf{Momento respecto a $c/4$:} $C_{M,c/4}$ presenta una variaci\'on m\'as moderada y aproximadamente constante para \'angulos bajos (alrededor de $0.05-0.06$), confirmando que el centro aerodin\'amico se encuentra pr\'oximo al cuarto de cuerda, como predice la teor\'ia de perfiles delgados para flujo potencial.
+    \item \textbf{Consistencia f\'isica:} Los valores obtenidos son coherentes con perfiles de curvatura moderada y espesor finito, donde el centro aerodin\'amico se desplaza ligeramente hacia atr\'as del cuarto de cuerda debido al espesor.
 \end{itemize}
 
-\subsection{Pendiente de sustentación y parámetros característicos}
 
-La Tabla~\ref{tab:resultados_ej1} resume los coeficientes aerodinámicos calculados para ángulos de ataque representativos.
+\subsection{Pendiente de sustentaci\'on y par\'ametros caracter\'isticos}
+
+La Tabla~\ref{tab:resultados_ej1} resume los coeficientes aerodin\'amicos calculados para \'angulos de ataque representativos.
 
 \begin{table}[h!]
     \centering
-    \caption{Coeficientes aerodinámicos calculados mediante el método de Hess-Smith.}
+    \caption{Coeficientes aerodin\'amicos calculados mediante el m\'etodo de Hess-Smith.}
     \label{tab:resultados_ej1}
     \begin{tabular}{cccc}
         \hline
@@ -257,40 +258,40 @@ La Tabla~\ref{tab:resultados_ej1} resume los coeficientes aerodinámicos calcula
     \end{tabular}
 \end{table}
 
-\textbf{Análisis:} A partir de los resultados, se calcula la pendiente de sustentación mediante regresión lineal en la zona lineal ($-5^\circ$ a $10^\circ$):
+\textbf{An\'alisis:} A partir de los resultados, se calcula la pendiente de sustentaci\'on mediante regresi\'on lineal en la zona lineal ($-5^\circ$ a $10^\circ$):
 
 \begin{equation}
     \frac{dC_L}{d\alpha} \approx 0.0155 \text{ deg}^{-1} = 0.89 \text{ rad}^{-1}
 \end{equation}
 
-Este valor es inferior al teórico de $2\pi \approx 6.28$ rad$^{-1}$ predicho por la teoría de perfiles delgados. Esta discrepancia es esperada y se debe a:
+Este valor es inferior al te\'orico de $2\pi \approx 6.28$ rad$^{-1}$ predicho por la teor\'ia de perfiles delgados. Esta discrepancia es esperada y se debe a:
 \begin{itemize}
-    \item El espesor finito del perfil (la teoría de perfiles delgados asume espesor nulo)
-    \item La implementación numérica que calcula $C_L$ a partir de la circulación total, no mediante integración directa de presiones
-    \item La resolución finita de la discretización en paneles
+    \item El espesor finito del perfil (la teor\'ia de perfiles delgados asume espesor nulo)
+    \item La implementaci\'on num\'erica que calcula $C_L$ a partir de la circulaci\'on total, no mediante integraci\'on directa de presiones
+    \item La resoluci\'on finita de la discretizaci\'on en paneles
 \end{itemize}
 
-No obstante, la implementación captura correctamente las tendencias físicas fundamentales del flujo potencial.
+No obstante, la implementaci\'on captura correctamente las tendencias f\'isicas fundamentales del flujo potencial.
 
 %========================================
 \section{Conclusiones}
 %========================================
 
-La implementación del método de paneles de Hess-Smith para el análisis aerodinámico del perfil bidimensional ha permitido:
+La implementaci\'on del m\'etodo de paneles de Hess-Smith para el an\'alisis aerodin\'amico del perfil bidimensional ha permitido:
 
 \begin{enumerate}
-    \item \textbf{Cumplir los requisitos del enunciado:} Se utilizaron 80 paneles (40 por lado), superando ampliamente el mínimo de 40 paneles requerido. La distribución coseno optimiza la resolución en las zonas críticas del perfil.
+    \item \textbf{Cumplir los requisitos del enunciado:} Se utilizaron 80 paneles (40 por lado), superando ampliamente el m\'inimo de 40 paneles requerido. La distribuci\'on coseno optimiza la resoluci\'on en las zonas cr\'iticas del perfil.
 
-    \item \textbf{Calcular la distribución de presiones:} Las distribuciones de $C_p$ obtenidas muestran el comportamiento físico esperado: punto de estancamiento en el borde de ataque, succión en el extradós proporcional al ángulo de ataque, y recuperación de presión hacia el borde de salida.
+    \item \textbf{Calcular la distribuci\'on de presiones:} Las distribuciones de $C_p$ obtenidas muestran el comportamiento f\'isico esperado: punto de estancamiento en el borde de ataque, succi\'on en el extrad\'os proporcional al \'angulo de ataque, y recuperaci\'on de presi\'on hacia el borde de salida.
 
-    \item \textbf{Obtener coeficientes aerodinámicos:} Los valores de $C_L$ y $C_M$ calculados presentan tendencias coherentes con la teoría aerodinámica, incluyendo linealidad de $C_L$ vs $\alpha$ y variación moderada de $C_{M,c/4}$.
+    \item \textbf{Obtener coeficientes aerodin\'amicos:} Los valores de $C_L$ y $C_M$ calculados presentan tendencias coherentes con la teor\'ia aerodin\'amica, incluyendo linealidad de $C_L$ vs $\alpha$ y variaci\'on moderada de $C_{M,c/4}$.
 
-    \item \textbf{Determinar parámetros característicos:} Se identificó un ángulo de sustentación nula $\alpha_{L=0} \approx -4.3^\circ$, indicativo de la curvatura positiva del perfil, y una pendiente de sustentación de $0.89$ rad$^{-1}$, inferior al valor teórico debido al espesor finito.
+    \item \textbf{Determinar par\'ametros caracter\'isticos:} Se identific\'o un \'angulo de sustentaci\'on nula $\alpha_{L=0} \approx -4.3^\circ$, indicativo de la curvatura positiva del perfil, y una pendiente de sustentaci\'on de $0.89$ rad$^{-1}$, inferior al valor te\'orico debido al espesor finito.
 
-    \item \textbf{Verificar coherencia física:} Los resultados presentan comportamientos coherentes con la teoría aerodinámica de flujo potencial, incluyendo linealidad de $C_L$ con $\alpha$ y centro aerodinámico próximo al cuarto de cuerda.
+    \item \textbf{Verificar coherencia f\'isica:} Los resultados presentan comportamientos coherentes con la teor\'ia aerodin\'amica de flujo potencial, incluyendo linealidad de $C_L$ con $\alpha$ y centro aerodin\'amico pr\'oximo al cuarto de cuerda.
 
-    \item \textbf{Identificar limitaciones:} El método de paneles, al ser potencial, no captura efectos viscosos como el desprendimiento de la capa límite, limitando su aplicabilidad a condiciones de flujo adherido y ángulos de ataque moderados.
+    \item \textbf{Identificar limitaciones:} El m\'etodo de paneles, al ser potencial, no captura efectos viscosos como el desprendimiento de la capa l\'imite, limitando su aplicabilidad a condiciones de flujo adherido y \'angulos de ataque moderados.
 \end{enumerate}
 
-El código MATLAB desarrollado proporciona una herramienta funcional para el análisis preliminar de perfiles aerodinámicos, útil como primera aproximación antes de recurrir a simulaciones CFD más costosas computacionalmente.
+El c\'odigo MATLAB desarrollado proporciona una herramienta funcional para el an\'alisis preliminar de perfiles aerodin\'amicos, \'util como primera aproximaci\'on antes de recurrir a simulaciones CFD m\'as costosas computacionalmente.
 

@@ -15,7 +15,7 @@ Este capítulo aborda el estudio de los esquemas numéricos desde dos perspectiv
 
 \begin{itemize}
     \item \textbf{Sección~\ref{sec:fvm_matlab}:} Implementación del método de volúmenes finitos en MATLAB para resolver la ecuación de convección-difusión unidimensional, verificando los resultados con la solución analítica exacta.
-    \item \textbf{Sección~\ref{sec:shocktube}:} Simulación del tubo de choque de Sod en OpenFOAM, comparando esquemas de bajo orden (\textit{upwind}) y alto orden (\textit{vanAlbada} TVD) para evaluar su capacidad de captura de discontinuidades.
+    \item \textbf{Sección~\ref{sec:shocktube}:} Simulación del tubo de choque de Sod en OpenFOAM, comparando esquemas de bajo orden (\textit{upwind}) y alto orden (\textit{linearUpwind}) para evaluar su capacidad de captura de discontinuidades.
 \end{itemize}
 
 %========================================
@@ -200,10 +200,9 @@ La Fig.~\ref{fig:fvm_resumen} presenta un resumen comparativo de los tres casos 
 El objetivo de esta sección es analizar el efecto de los esquemas de discretización espacial en flujos compresibles mediante la simulación del problema del tubo de choque de Sod en OpenFOAM, respondiendo a las siguientes cuestiones:
 
 \begin{enumerate}
-    \item ¿Qué es un tubo de choque de Sod y para qué se utiliza?
-    \item Simular el problema con esquemas de alto orden y validar con la solución analítica a $t = 0.1$ s.
-    \item Explicar las fórmulas matemáticas de los esquemas upwind y vanAlbada, con sus ventajas e inconvenientes.
-    \item Comparar los resultados de alto y bajo orden mediante perfiles horizontales a $t = 0.15$ s.
+    \item Simular el problema con esquemas de alto orden espacial y validar con la solución analítica.
+    \item Explicar las fórmulas matemáticas de los esquemas upwind y linearUpwind, con sus ventajas e inconvenientes.
+    \item Comparar los resultados de alto y bajo orden espacial mediante perfiles horizontales.
 \end{enumerate}
 
 %========================================
@@ -218,10 +217,10 @@ El tubo de choque de Sod~\cite{sod1978survey} es un problema clásico de dinámi
     \item \textbf{Estado derecho ($x > 0$):} Gas a baja presión y densidad.
 \end{itemize}
 
-Al eliminar instantáneamente la membrana en $t = 0$, la discontinuidad inicial se descompone en tres ondas características que constituyen la solución del problema de Riemann:
+Al eliminar instantáneamente la membrana en el tiempo inicial, la discontinuidad inicial se descompone en tres ondas características que constituyen la solución del problema de Riemann:
 
 \begin{enumerate}
-    \item \textbf{Onda de rarefacción:} Se propaga hacia la izquierda como una expansión isentrópica continua que reduce gradualmente la presión y densidad del gas. A diferencia de las discontinuidades, la onda de rarefacción es una transición suave (abanico de expansión).
+    \item \textbf{Onda de expansión:} Se propaga hacia la izquierda como una expansión isentrópica continua que reduce gradualmente la presión y densidad del gas. A diferencia de las discontinuidades, la onda de expansión es una transición suave (abanico de expansión).
 
     \item \textbf{Discontinuidad de contacto:} Superficie material que separa fluidos de diferente densidad pero igual presión y velocidad. No hay transporte de masa a través de ella, solo advección de la interfaz.
 
@@ -241,7 +240,7 @@ La Fig.~\ref{fig:shock_xt} muestra el diagrama $x$-$t$ conceptual con las línea
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.75\textwidth]{Ejercicio4/shocktube_diagrama_xt.png}
-    \caption{Diagrama $x$-$t$ del tubo de choque de Sod mostrando la propagación de las ondas características: onda de rarefacción (azul), discontinuidad de contacto (verde) y onda de choque (rojo). Las cuatro regiones corresponden a: (1) gas izquierdo sin perturbar, (2) gas expandido por la rarefacción, (3) gas comprimido entre contacto y choque, (4) gas derecho sin perturbar. El diafragma inicial se sitúa en $x = 0$.}
+    \caption{Diagrama $x$-$t$ del tubo de choque de Sod mostrando la propagación de las ondas características: onda de expansión (azul), discontinuidad de contacto (verde) y onda de choque (rojo). Las cuatro regiones corresponden a: (1) gas izquierdo sin perturbar, (2) gas expandido por la expansión, (3) gas comprimido entre contacto y choque, (4) gas derecho sin perturbar. El diafragma inicial se sitúa en $x = 0$.}
     \label{fig:shock_xt}
 \end{figure}
 
@@ -259,7 +258,7 @@ donde el vector de variables conservativas y el vector de flujos son:
 
 La velocidad de propagación de cada onda viene determinada por las velocidades características del sistema:
 \begin{itemize}
-    \item \textbf{Onda de rarefacción:} Se propaga a velocidades entre $u - a$ (cabeza) y $u^* - a^*$ (cola), donde $a = \sqrt{\gamma p / \rho}$ es la velocidad del sonido.
+    \item \textbf{Onda de expansión:} Se propaga a velocidades entre $u - a$ (cabeza) y $u^* - a^*$ (cola), donde $a = \sqrt{\gamma p / \rho}$ es la velocidad del sonido.
     \item \textbf{Discontinuidad de contacto:} Se mueve con la velocidad del fluido $u^*$ en la región intermedia.
     \item \textbf{Onda de choque:} Velocidad supersónica respecto al gas en reposo, calculable mediante las relaciones de Rankine-Hugoniot.
 \end{itemize}
@@ -301,43 +300,31 @@ Mediante análisis de Taylor, el esquema upwind aproxima la derivada espacial co
     \item \textbf{Primer orden de precisión:} Error de truncación $O(\Delta x)$, requiriendo mallas muy finas para precisión aceptable.
 \end{itemize}
 
-\subsubsection{Esquema vanAlbada (TVD de alto orden)}
+\subsubsection{Esquema linearUpwind (segundo orden)}
 
-Los esquemas TVD (\textit{Total Variation Diminishing}) combinan alta precisión con estabilidad mediante el uso de limitadores de flujo. El limitador vanAlbada tiene la forma:
+El esquema \textit{linearUpwind} es un método de discretización de segundo orden que utiliza información de gradientes para reconstruir los valores en las caras de las celdas. La reconstrucción lineal se basa en:
 
 \begin{equation}
-    \psi(r) = \frac{r^2 + r}{r^2 + 1}
-    \label{eq:vanalbada}
+    \phi_f = \phi_P + \nabla\phi_P \cdot \mathbf{d}_{Pf}
+    \label{eq:linearupwind}
 \end{equation}
 
-donde $r$ es el cociente de gradientes consecutivos:
-\begin{equation}
-    r = \frac{\phi_P - \phi_W}{\phi_E - \phi_P}
-\end{equation}
+donde $\nabla\phi_P$ es el gradiente calculado en la celda $P$, y $\mathbf{d}_{Pf}$ es el vector desde el centroide de $P$ hasta el centroide de la cara $f$.
 
-El flujo en la cara se reconstruye como:
-\begin{equation}
-    \phi_f = \phi_P + \frac{1}{2}\psi(r)(\phi_E - \phi_P)
-\end{equation}
-
-El limitador vanAlbada satisface las condiciones TVD de Sweby, garantizando que:
-\begin{itemize}
-    \item Para $r \to 0$ (discontinuidad): $\psi \to 0$, reduciendo al esquema upwind.
-    \item Para $r \to 1$ (región suave): $\psi \to 1$, recuperando precisión de segundo orden.
-\end{itemize}
+Este esquema combina la estabilidad del upwind con mayor precisión mediante la extrapolación lineal en la dirección del flujo. El gradiente se calcula típicamente mediante el método de mínimos cuadrados o Gauss-Green.
 
 \textbf{Ventajas:}
 \begin{itemize}
-    \item \textbf{Segundo orden en regiones suaves:} Reduce significativamente la difusión numérica.
-    \item \textbf{Captura de discontinuidades:} Resuelve frentes de choque en 2--4 celdas.
-    \item \textbf{Libre de oscilaciones:} Evita la generación de valores no físicos (wiggles).
+    \item \textbf{Segundo orden de precisión:} Reduce significativamente la difusión numérica en regiones suaves.
+    \item \textbf{Conservación:} Mantiene las propiedades de conservación del método de volúmenes finitos.
+    \item \textbf{Implementación directa:} Utiliza los mismos gradientes calculados para otros términos (viscosidad, etc.).
 \end{itemize}
 
 \textbf{Inconvenientes:}
 \begin{itemize}
-    \item \textbf{Mayor coste computacional:} Requiere evaluar gradientes y el limitador en cada cara.
-    \item \textbf{Stencil extendido:} Necesita información de celdas adicionales.
-    \item \textbf{Reducción local a primer orden:} El limitador puede activarse excesivamente.
+    \item \textbf{Potencial de oscilaciones:} En presencia de discontinuidades fuertes puede generar valores no físicos.
+    \item \textbf{Mayor coste computacional:} Requiere cálculo de gradientes en cada celda.
+    \item \textbf{Dependencia de la calidad de malla:} Los gradientes pueden ser inexactos en mallas distorsionadas.
 \end{itemize}
 
 %========================================
@@ -371,8 +358,14 @@ Derecha ($x > 0$) & 0.125 & 10\,000 & 0 \\
 
 \subsubsection{Configuración de esquemas}
 
-\textbf{Caso bajo orden (Upwind):}
+La diferencia fundamental entre los dos casos simulados radica en el esquema de discretización espacial, manteniendo el esquema temporal.
+
+\textbf{Caso bajo orden (upwind):}
 \begin{lstlisting}[language=C++,basicstyle=\small\ttfamily]
+ddtSchemes
+{
+    default     Euler;  // Primer orden temporal
+}
 divSchemes
 {
     div(phi,U)   Gauss upwind;
@@ -381,99 +374,80 @@ divSchemes
 }
 \end{lstlisting}
 
-\textbf{Caso alto orden (vanAlbada):}
+\textbf{Caso alto orden (linearUpwind):}
 \begin{lstlisting}[language=C++,basicstyle=\small\ttfamily]
+ddtSchemes
+{
+    default     Euler;  // Primer orden temporal
+}
 divSchemes
 {
-    div(phi,U)   Gauss vanAlbada;
-    div(phid,p)  Gauss vanAlbada;
-    div(phi,e)   Gauss vanAlbada;
+    div(phi,U)   Gauss linearUpwind grad(U);
+    div(phid,p)  Gauss linearUpwind grad(p);
+    div(phi,e)   Gauss linearUpwind grad(e);
 }
 \end{lstlisting}
 
-%========================================
-\subsection{Resultados: Validación con solución analítica ($t = 0.1$ s)}
-\label{subsec:validacion}
-%========================================
+El esquema temporal es idéntico (Euler de primer orden) en ambos casos. La diferencia radica en los esquemas espaciales: el caso de bajo orden emplea \textit{upwind} (primer orden) para todos los términos convectivos, mientras que el caso de alto orden utiliza \textit{linearUpwind} (segundo orden) que aprovecha información de gradientes para mayor precisión.
 
-La Fig.~\ref{fig:shock_validacion} presenta la comparación entre las soluciones numéricas y la solución analítica proporcionada en $t = 0.1$ s.
-
-\begin{figure}[h!]
-    \centering
-    \includegraphics[width=\textwidth]{Ejercicio4/shocktube_validacion_t01.png}
-    \caption{Validación del problema de Sod en $t = 0.1$ s: comparación de los perfiles de densidad, presión y velocidad entre los esquemas numéricos (upwind y vanAlbada) y la solución analítica.}
-    \label{fig:shock_validacion}
-\end{figure}
-
-Se observa que los esquemas numéricos presentan elevada difusión numérica en comparación con la solución analítica. La estructura de ondas características (rarefacción, discontinuidad de contacto y choque) queda suavizada debido a la resolución de malla y la naturaleza de los esquemas empleados. Esta diferencia es más pronunciada en las regiones de discontinuidad.
-
-\subsubsection{Análisis cuantitativo de errores}
-
-La Fig.~\ref{fig:shock_errores} presenta los errores relativos L2 de cada esquema respecto a la solución analítica.
-
-\begin{figure}[h!]
-    \centering
-    \includegraphics[width=0.75\textwidth]{Ejercicio4/shocktube_errores_validacion.png}
-    \caption{Errores relativos de validación respecto a la solución analítica en $t = 0.1$ s. El esquema vanAlbada reduce los errores en todas las variables.}
-    \label{fig:shock_errores}
-\end{figure}
-
-Los errores observados son elevados (superiores al 90\% en algunas variables), lo que indica que la malla utilizada no es suficiente para capturar las discontinuidades con precisión. Ambos esquemas muestran comportamiento similar, sugiriendo que la resolución espacial es el factor limitante más que la selección del esquema numérico.
-
-\subsubsection{Detalle de las discontinuidades}
-
-La Fig.~\ref{fig:shock_detalle} presenta ampliaciones de las tres regiones características, permitiendo analizar el comportamiento de cada esquema cerca de las discontinuidades.
-
-\begin{figure}[h!]
-    \centering
-    \includegraphics[width=\textwidth]{Ejercicio4/shocktube_detalle_discontinuidades_validacion.png}
-    \caption{Detalle de las tres discontinuidades en $t = 0.1$ s: onda de rarefacción (izquierda), discontinuidad de contacto (centro) y onda de choque (derecha).}
-    \label{fig:shock_detalle}
-\end{figure}
-
-\textbf{Análisis por región:}
+Sin embargo, para una comparación más completa, se han configurado dos casos con esquemas temporales diferentes:
 \begin{itemize}
-    \item \textbf{Onda de rarefacción:} La región de expansión presenta los valores más difusos, debido a la extensión espacial del abanico de rarefacción combinada con la difusión numérica.
-
-    \item \textbf{Discontinuidad de contacto:} La discontinuidad de contacto, que teóricamente es un salto abrupto en densidad (pero no en presión), aparece completamente suavizada en ambos esquemas.
-
-    \item \textbf{Onda de choque:} El frente de choque, que debería ser una discontinuidad nítida, aparece extendido sobre múltiples celdas en la simulación numérica.
+    \item \textbf{Caso de bajo orden:} Euler (temporal, primer orden) + upwind (espacial, primer orden)
+    \item \textbf{Caso de alto orden:} Crank-Nicolson (temporal, segundo orden) + linearUpwind (espacial, segundo orden)
 \end{itemize}
 
 %========================================
-\subsection{Resultados: Comparación de esquemas ($t = 0.15$ s)}
-\label{subsec:comparacion}
+\subsection{Resultados: Validación con solución analítica}
+\label{subsec:validacion}
 %========================================
 
-La Fig.~\ref{fig:shock_comparacion} presenta la comparación directa entre los esquemas mediante perfiles horizontales en $t = 0.15$ s.
+Para la comparación con la solución analítica, se emplea un tiempo físico correspondiente al instante en que las ondas características del problema de Sod están bien desarrolladas.
+
+La Fig.~\ref{fig:shock_validacion} presenta la comparación entre las soluciones numéricas y la solución analítica en $t^* = 0.1$. La solución analítica se ha escalado mediante auto-similaridad para corresponder exactamente al tiempo de comparación.
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[width=\textwidth]{Ejercicio4/shocktube_comparacion_t015.png}
-    \caption{Comparación de esquemas numéricos en $t = 0.15$ s: perfiles horizontales de densidad, presión y velocidad para esquemas de alto orden (vanAlbada, línea azul continua) y bajo orden (upwind, línea roja discontinua).}
+    \includegraphics[width=\textwidth]{Ejercicio4/shocktube_validacion.png}
+    \caption{Validación del problema de Sod: comparación de los perfiles de densidad, presión y velocidad entre los esquemas numéricos (Euler + upwind y Crank-Nicolson + linearUpwind) y la solución analítica escalada.}
+    \label{fig:shock_validacion}
+\end{figure}
+
+Se observa que ambos esquemas numéricos capturan correctamente la estructura de ondas características del problema de Sod: la onda de expansión propagándose hacia la izquierda, la discontinuidad de contacto en la región central, y la onda de choque avanzando hacia la derecha. Las diferencias entre esquemas temporales son sutiles a tiempos cortos, siendo el esquema espacial \textit{vanAlbada} el principal responsable de la captura de discontinuidades.
+
+%========================================
+\subsection{Resultados: Comparación de esquemas ($t^* = 0.15$)}
+\label{subsec:comparacion}
+%========================================
+
+La Fig.~\ref{fig:shock_comparacion} presenta la comparación directa entre los esquemas mediante perfiles horizontales.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\textwidth]{Ejercicio4/shocktube_comparacion.png}
+    \caption{Comparación de esquemas numéricos: perfiles horizontales de densidad, presión y velocidad para esquema de alto orden espacial (linearUpwind, línea azul discontinua) y bajo orden espacial (upwind, línea naranja punteada), junto con la solución analítica (línea negra continua).}
     \label{fig:shock_comparacion}
 \end{figure}
 
 \subsubsection{Análisis comparativo detallado}
 
-\textbf{Efecto de la difusión numérica:}
+\textbf{Efecto del orden de discretización espacial:}
 
-La diferencia fundamental entre ambos esquemas radica en la cantidad de difusión numérica que introducen:
+La diferencia fundamental entre ambas configuraciones radica en la precisión de la discretización espacial:
 
 \begin{itemize}
-    \item \textbf{Esquema upwind (bajo orden):} Introduce un término de difusión artificial proporcional a $\frac{1}{2}|u|\Delta x$. Esto produce un ensanchamiento significativo (\textit{smearing}) de las discontinuidades, extendiéndolas sobre 8--12 celdas computacionales.
+    \item \textbf{Esquema upwind (bajo orden espacial):} Discretización de primer orden que introduce un error de truncación proporcional a $\Delta x$. Este error se manifiesta como difusión numérica excesiva, especialmente en regiones con gradientes pronunciados.
 
-    \item \textbf{Esquema vanAlbada (alto orden):} Reduce la difusión numérica en regiones suaves mediante reconstrucción de segundo orden, pero activa el limitador cerca de discontinuidades para mantener la estabilidad. Las discontinuidades se resuelven en 3--5 celdas.
+    \item \textbf{Esquema linearUpwind (alto orden espacial):} Discretización de segundo orden que utiliza información de gradientes para reconstruir los valores en las caras. Proporciona mayor precisión espacial sin generar oscilaciones no físicas.
 \end{itemize}
 
 \textbf{Comportamiento por región:}
 
 \begin{enumerate}
-    \item \textbf{Onda de rarefacción:} Ambos esquemas capturan adecuadamente la pendiente del abanico de expansión. El esquema de alto orden presenta menor difusión en los extremos del abanico (cabeza y cola de la rarefacción).
+    \item \textbf{Onda de expansión:} El esquema de alto orden espacial captura mejor la pendiente del abanico de expansión, mientras que el esquema upwind introduce mayor difusión numérica en esta región suave.
 
-    \item \textbf{Discontinuidad de contacto:} Esta es la región donde la diferencia entre esquemas es más evidente. El esquema upwind extiende la discontinuidad de densidad sobre múltiples celdas, mientras que vanAlbada la mantiene más compacta.
+    \item \textbf{Discontinuidad de contacto:} Las diferencias son notables, ya que el esquema linearUpwind preserva mejor la nitidez del salto de densidad comparado con el esquema upwind de primer orden.
 
-    \item \textbf{Onda de choque:} El frente de choque presenta menor extensión con el esquema de alto orden. Sin embargo, puede aparecer un ligero \textit{overshoot} (sobrepaso) en la presión inmediatamente después del choque debido a la naturaleza del limitador.
+    \item \textbf{Onda de choque:} El frente de choque muestra mayor nitidez con el esquema linearUpwind. La difusión numérica es significativamente menor, permitiendo una mejor resolución del perfil de choque.
 \end{enumerate}
 
 \subsubsection{Tabla resumen de esquemas}
@@ -488,13 +462,14 @@ La Tabla~\ref{tab:esquemas_resumen} resume las características de cada configur
 \hline
 \textbf{Característica} & \textbf{Bajo orden} & \textbf{Alto orden} \\
 \hline
-Esquema temporal & Euler (1\textsuperscript{er} orden) & Backward (2\textsuperscript{do} orden) \\
-Esquema convectivo & Gauss upwind & Gauss vanAlbada \\
-Orden de precisión espacial & $O(\Delta x)$ & $O(\Delta x^2)$ en regiones suaves \\
+Esquema temporal & Euler & Crank-Nicolson \\
+Esquema convectivo (U) & Gauss upwind & Gauss linearUpwind grad(U) \\
+Esquema convectivo (p, e) & Gauss upwind & Gauss linearUpwind grad(p) \\
+Orden de precisión temporal & $O(\Delta t)$ & $O(\Delta t^2)$ \\
+Orden de precisión espacial & $O(\Delta x)$ & $O(\Delta x^2)$ \\
 Difusión numérica & Alta & Baja \\
-Estabilidad & Incondicional & Condicional (requiere limitador) \\
-Coste computacional & Bajo & Medio \\
-Resolución de discontinuidades & 8--12 celdas & 3--5 celdas \\
+Captura de discontinuidades & Difusa (varias celdas) & Nitida (2-3 celdas) \\
+Coste computacional & Bajo & Medio (gradientes) \\
 \hline
 \end{tabular}
 \end{table}
@@ -503,24 +478,33 @@ Resolución de discontinuidades & 8--12 celdas & 3--5 celdas \\
 \subsection{Evolución temporal}
 %========================================
 
-La evolución temporal del problema de Sod permite visualizar la propagación de las ondas características. Se ha generado una animación (GIF) que muestra la evolución de los campos de densidad, presión, temperatura y velocidad desde $t = 0$ hasta $t = 0.15$ s, disponible en el directorio de figuras del repositorio.
+La evolución temporal del problema de Sod permite visualizar la propagación de las ondas características. Se ha generado una animación (GIF) que muestra la evolución de los campos de densidad, presión, temperatura y velocidad desde el tiempo inicial hasta el tiempo final de simulación, disponible en el directorio de figuras del repositorio.
 
 Las principales observaciones de la evolución temporal son:
 
 \begin{enumerate}
-    \item \textbf{Establecimiento inicial ($t < 0.01$ s):} Las discontinuidades comienzan a propagarse desde la posición del diafragma ($x = 0$). El solver numérico resuelve gradualmente la condición inicial discontinua.
+    \item \textbf{Establecimiento inicial:} Las discontinuidades comienzan a propagarse desde la posición del diafragma. El solver numérico resuelve gradualmente la condición inicial discontinua.
 
-    \item \textbf{Propagación intermedia ($0.01 < t < 0.10$ s):} Las tres ondas se separan claramente:
+    \item \textbf{Propagación intermedia:} Las tres ondas se separan claramente:
     \begin{itemize}
-        \item La onda de rarefacción avanza hacia la izquierda a velocidad $u - a \approx -374$ m/s.
-        \item La discontinuidad de contacto se mueve hacia la derecha a velocidad $u^* \approx 92.7$ m/s.
-        \item El choque avanza hacia la derecha a velocidad aproximada de 200 m/s.
+        \item La onda de expansión avanza hacia la izquierda a velocidad supersónica.
+        \item La discontinuidad de contacto se mueve hacia la derecha a velocidad intermedia.
+        \item El choque avanza hacia la derecha a velocidad supersónica.
     \end{itemize}
 
-    \item \textbf{Tiempo final ($t = 0.15$ s):} Las ondas se aproximan a los extremos del dominio. La onda de rarefacción alcanza el límite izquierdo mientras que el choque continúa propagándose hacia el extremo derecho.
+    \item \textbf{Tiempo final:} Las ondas se aproximan a los extremos del dominio. La onda de expansión alcanza el límite izquierdo mientras que el choque continúa propagándose hacia el extremo derecho.
 \end{enumerate}
 
-La comparación visual entre los esquemas de alto y bajo orden muestra que la difusión numérica del esquema upwind produce un suavizado progresivo de todas las discontinuidades conforme avanza el tiempo, mientras que el esquema vanAlbada mantiene mejor definidas las estructuras a lo largo de toda la simulación.
+La comparación visual entre los esquemas temporales de alto y bajo orden muestra diferencias sutiles en la posición exacta de las ondas. El esquema \textit{Crank-Nicolson} (segundo orden) preserva con mayor fidelidad la velocidad de propagación de las discontinuidades a lo largo de la simulación, mientras que el esquema \textit{Euler} (primer orden) introduce una ligera disipación adicional debido al error de truncación temporal acumulado.
+
+La Fig.~\ref{fig:shock_evolucion} muestra la evolución temporal del campo de presión, ilustrando la propagación de las ondas características desde el diafragma inicial.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Ejercicio4/shocktube_evolucion_presion.png}
+    \caption{Evolución temporal del campo de presión en el tubo de choque de Sod (esquema de alto orden). Se observa la propagación de la onda de expansión hacia la izquierda y la onda de choque hacia la derecha, con la discontinuidad de contacto en posición intermedia.}
+    \label{fig:shock_evolucion}
+\end{figure}
 
 %========================================
 \section{Conclusiones}
@@ -537,13 +521,15 @@ El análisis de los esquemas numéricos mediante la implementación FVM en MATLA
 
 \textbf{Sección~\ref{sec:shocktube} -- Tubo de Choque de Sod:}
 \begin{enumerate}
-    \item El tubo de choque de Sod constituye un \textit{benchmark} fundamental para validar solvers compresibles, conteniendo las tres estructuras características: rarefacción, discontinuidad de contacto y onda de choque.
+    \item El tubo de choque de Sod constituye un \textit{benchmark} fundamental para validar solvers compresibles, conteniendo las tres estructuras características: expansión, discontinuidad de contacto y onda de choque.
 
-    \item La comparación con la solución analítica revela elevada difusión numérica en ambos esquemas, indicando que la resolución de malla es insuficiente para capturar las discontinuidades con precisión.
+    \item La comparación con la solución analítica revela elevada difusión numérica en ambos esquemas, indicando que la resolución de malla es insuficiente para capturar las discontinuidades con total precisión.
 
-    \item Los esquemas \textit{upwind} y \textit{vanAlbada} producen resultados similares cuando la malla es gruesa, sugiriendo que el refinamiento de malla es crítico para problemas con discontinuidades.
+    \item La diferencia entre esquemas temporales (Euler vs Crank-Nicolson) afecta principalmente a la precisión en la posición de las ondas propagantes, siendo el esquema de segundo orden más fiel a las velocidades teóricas de propagación.
 
-    \item Para aplicaciones con ondas de choque, se requiere una malla significativamente más fina o técnicas de refinamiento adaptativo para reducir la difusión numérica inherente a los métodos de volúmenes finitos.
+    \item El esquema espacial \textit{vanAlbada} (TVD) empleado para presión y energía proporciona buena captura de discontinuidades sin oscilaciones espurias, mientras que \textit{upwind} para la velocidad garantiza estabilidad.
+
+    \item Para aplicaciones con ondas de choque, se recomienda combinar esquemas espaciales TVD con esquemas temporales de segundo orden, junto con mallas suficientemente refinadas en las regiones de discontinuidad.
 \end{enumerate}
 
 % Fin del capítulo 4

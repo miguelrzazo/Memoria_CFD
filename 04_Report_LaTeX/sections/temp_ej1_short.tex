@@ -1,0 +1,208 @@
+%========================================
+% CAPITULO 1: METODO DE PANELES HESS-SMITH
+%========================================
+\chapter{Aerodinámica de Perfiles: Método de Paneles Hess-Smith}
+\label{chap:ejercicio1}
+
+%========================================
+\section{Introducción}
+%========================================
+
+El análisis aerodinámico de perfiles bidimensionales constituye el primer paso fundamental en el diseño de superficies sustentadoras. Antes del desarrollo de la dinámica de fluidos computacional (CFD), los métodos de paneles representaban el estado del arte para el cálculo de flujos potenciales alrededor de geometrías arbitrarias~\cite{katz2001low}.
+
+El método de Hess-Smith, desarrollado en la década de 1960, combina distribuciones de manantiales (fuentes) y torbellinos sobre la superficie del cuerpo para resolver el problema del flujo potencial bidimensional. A diferencia de otros métodos de paneles que utilizan solo una singularidad, la combinación de ambas permite satisfacer simultáneamente la condición de no penetración en cada panel y la condición de Kutta en el borde de salida, garantizando una solución físicamente realista con circulación finita.
+
+Este método presenta las siguientes características fundamentales~\cite{hess1967calculation,anderson2010fundamentals}:
+\begin{itemize}
+    \item \textbf{Flujo potencial:} Se asume fluido incompresible, no viscoso e irrotacional, lo que permite la aplicación del principio de superposición de soluciones elementales.
+
+    \item \textbf{Discretización de superficie:} El perfil se divide en $N$ paneles rectos, sobre los cuales se distribuyen las singularidades con intensidad constante.
+
+    \item \textbf{Condición de Kutta:} Se impone que el flujo abandone suavemente el borde de salida, lo que determina la circulación total y, por tanto, la sustentación.
+
+    \item \textbf{Validez:} Los resultados son aplicables en régimen subsónico con flujo adherido, donde los efectos viscosos son despreciables excepto en una capa límite delgada.
+\end{itemize}
+
+La teoría de perfiles delgados predice una pendiente de sustentación $dC_L/d\alpha = 2\pi$ rad$^{-1}$ para cualquier perfil en flujo potencial bidimensional. El método de Hess-Smith, al resolver numéricamente el problema completo sin las aproximaciones de perfil delgado, debe aproximarse a este valor teórico, constituyendo una validación fundamental de la implementación.
+
+%========================================
+\section{Fundamento Teórico}
+%========================================
+
+\subsection{Ecuaciones de gobierno}
+
+Para flujo potencial incompresible e irrotacional, el campo de velocidades deriva de un potencial de velocidad $\phi$ que satisface la ecuación de Laplace:
+\begin{equation}
+    \nabla^2 \phi = 0
+    \label{eq:laplace}
+\end{equation}
+
+La linealidad de esta ecuación permite construir la solución mediante superposición de singularidades elementales:
+\begin{equation}
+    \phi = \phi_\infty + \sum_{j=1}^{N} \phi_{q_j} + \phi_\gamma
+\end{equation}
+donde $\phi_\infty$ es el potencial de la corriente uniforme, $\phi_{q_j}$ es la contribución de los manantiales en cada panel, y $\phi_\gamma$ es la contribución de los torbellinos.
+
+\subsection{Distribución de singularidades}
+
+En el método de Hess-Smith, cada panel $j$ tiene:
+\begin{itemize}
+    \item Una distribución de \textbf{manantiales} de intensidad $q_j$ (variable para cada panel)
+    \item Una distribución de \textbf{torbellinos} de intensidad $\gamma$ (constante para todos los paneles)
+\end{itemize}
+
+La velocidad inducida por un manantial distribuido sobre un panel de longitud $l_j$ en un punto $P$ ubicado a distancias $r_1$ y $r_2$ de los extremos del panel es:
+\begin{equation}
+    u_q = \frac{q_j}{2\pi} \ln\left(\frac{r_2}{r_1}\right), \quad
+    w_q = \frac{q_j}{2\pi} (\theta_2 - \theta_1)
+\end{equation}
+
+Análogamente, para el torbellino:
+\begin{equation}
+    u_\gamma = -\frac{\gamma}{2\pi} (\theta_2 - \theta_1), \quad
+    w_\gamma = \frac{\gamma}{2\pi} \ln\left(\frac{r_2}{r_1}\right)
+\end{equation}
+
+\subsection{Condiciones de contorno}
+
+Se imponen dos tipos de condiciones:
+
+\textbf{Condición de no penetración:} La componente normal de la velocidad debe ser nula en cada punto de control (centro del panel):
+\begin{equation}
+    \vec{V} \cdot \vec{n}_i = 0 \quad \forall i = 1, \ldots, N
+    \label{eq:no_penetracion}
+\end{equation}
+
+Esta condición genera $N$ ecuaciones lineales con $N+1$ incógnitas ($q_1, \ldots, q_N, \gamma$).
+
+\textbf{Condición de Kutta:} Para cerrar el sistema y garantizar que el flujo abandone suavemente el borde de salida, se impone que las velocidades tangenciales en los paneles adyacentes al borde de salida sean iguales en magnitud pero opuestas en signo:
+\begin{equation}
+    V_{t,\text{sup}} + V_{t,\text{inf}} = 0
+    \label{eq:kutta}
+\end{equation}
+
+\subsection{Sistema de ecuaciones}
+
+El sistema resultante tiene la forma matricial:
+\begin{equation}
+    [A]_{(N+1) \times (N+1)} \begin{Bmatrix} q_1 \\ \vdots \\ q_N \\ \gamma \end{Bmatrix} = \begin{Bmatrix} b_1 \\ \vdots \\ b_N \\ b_{N+1} \end{Bmatrix}
+\end{equation}
+donde los coeficientes $A_{ij}$ representan la influencia del panel $j$ sobre el punto de control $i$, y $b_i = -\vec{V}_\infty \cdot \vec{n}_i$ para las ecuaciones de no penetración.
+
+\subsection{Coeficientes aerodinámicos}
+
+Una vez resuelto el sistema, se calculan los coeficientes aerodinámicos:
+
+\textbf{Coeficiente de presión:}
+\begin{equation}
+    C_p = 1 - \left(\frac{V_t}{U_\infty}\right)^2
+    \label{eq:cp}
+\end{equation}
+donde $V_t$ es la velocidad tangencial en cada panel.
+
+\textbf{Coeficiente de sustentación:} Mediante el teorema de Kutta-Joukowski:
+\begin{equation}
+    C_L = \frac{2\Gamma}{U_\infty \, c}
+    \label{eq:cl}
+\end{equation}
+donde $\Gamma$ es la circulación total alrededor del perfil.
+
+\textbf{Coeficiente de momento:} Respecto al borde de ataque:
+\begin{equation}
+    C_{M,O} = \sum_{i=1}^{N} C_{p,i} \cdot \frac{x_i}{c} \cdot \frac{l_i}{c}
+    \label{eq:cm_o}
+\end{equation}
+
+Respecto al cuarto de cuerda:
+\begin{equation}
+    C_{M,c/4} = C_{M,O} - \frac{C_L}{4}
+    \label{eq:cm_c4}
+\end{equation}
+
+%========================================
+\section{Implementación y Configuración}
+%========================================
+
+\subsection{Geometría del perfil}
+
+Las coordenadas del perfil fueron proporcionadas en el enunciado del ejercicio, con 17 puntos definidos tanto para el extradós como para el intradós. El perfil presenta las siguientes características geométricas:
+
+\begin{itemize}
+    \item Cuerda: $c = 1.0$ (normalizada)
+    \item Espesor máximo: aproximadamente $12\%$ de la cuerda
+    \item Curvatura positiva: genera sustentación a ángulo de ataque nulo
+\end{itemize}
+
+\subsection{Discretización en paneles}
+
+Para cumplir el requisito de al menos 40 paneles, se implementó una interpolación con distribución coseno que proporciona mayor densidad de paneles cerca del borde de ataque y de salida, donde los gradientes de presión son más pronunciados:
+
+\begin{equation}
+    x_i = \frac{c}{2}\left(1 - \cos\left(\frac{i\pi}{N_{\text{pts}}}\right)\right), \quad i = 0, 1, \ldots, N_{\text{pts}}
+\end{equation}
+
+La configuración final utiliza es:
+\begin{itemize}
+    \item 41 puntos por lado (extradós e intradós)
+    \item 80 paneles totales (40 en extradós + 40 en intradós)
+    \item Distribución coseno para refinamiento en bordes
+\end{itemize}
+
+\subsection{Parámetros de simulación}
+
+\begin{itemize}
+    \item Velocidad de corriente libre: $U_\infty = 20$ m/s
+    \item Rango de ángulos de ataque: $\alpha = -10^\circ$ a $25^\circ$ con incremento de $1^\circ$
+    \item Total de casos analizados: 36 ángulos de ataque
+\end{itemize}
+
+%========================================
+\section{Resultados y Análisis}
+%========================================
+
+\subsection{Discretización del perfil y validación geométrica}
+
+La Fig.~\ref{fig:perfil_paneles_ej1} muestra el perfil aerodinámico discretizado en 80 paneles, con los puntos de control (centros de panel) marcados. Se observa claramente la mayor densidad de paneles cerca del borde de ataque, proporcionada por la distribución coseno.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.90\textwidth]{Ejercicio1/perfil_paneles.png}
+    \caption{Perfil aerodinámico discretizado con 80 paneles y puntos de control. La distribución coseno proporciona mayor resolución en el borde de ataque y de salida.}
+    \label{fig:perfil_paneles_ej1}
+\end{figure}
+
+\textbf{Análisis:} La discretización cumple ampliamente el requisito mínimo de 40 paneles (se utilizaron 80 paneles totales, 40 por superficie). La distribución coseno concentra paneles en las zonas críticas donde los gradientes de presión son más pronunciados, optimizando la precisión del método para un número dado de paneles.
+
+\subsection{Distribución del coeficiente de presión $C_p$}
+
+La Fig.~\ref{fig:Cp_distribucion_ej1} presenta la distribución del coeficiente de presión $C_p$ sobre el perfil para varios ángulos de ataque representativos ($\alpha = 0^\circ, 5^\circ, 10^\circ, 15^\circ$).
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Ejercicio1/Cp_distribucion.png}
+    \caption{Distribución del coeficiente de presión $C_p$ sobre el perfil para diferentes ángulos de ataque. Líneas sólidas: extradós; líneas discontinuas: intradós. El eje $C_p$ está invertido siguiendo la convención aeronáutica.}
+    \label{fig:Cp_distribucion_ej1}
+\end{figure}
+
+\textbf{Análisis:} Las distribuciones obtenidas muestran comportamiento físico coherente:
+\begin{itemize}
+    \item \textbf{Punto de estancamiento:} En el borde de ataque, $C_p \approx 1$ donde la velocidad es nula, confirmando la correcta implementación de la condición de no penetración.
+    \item \textbf{Succión en extradós:} Los valores negativos de $C_p$ indican velocidades superiores a $U_\infty$, generando la succión que produce sustentación. El pico de succión se localiza cerca del borde de ataque y se intensifica con el ángulo de ataque.
+    \item \textbf{Efecto del ángulo de ataque:} Al aumentar $\alpha$, la diferencia de presión entre extradós e intradós se incrementa proporcionalmente, lo que explica el aumento lineal de la sustentación observado.
+    \item \textbf{Recuperación de presión:} Hacia el borde de salida, las presiones se recuperan gradualmente, con valores ligeramente superiores en el intradós debido al efecto de la curvatura del perfil.
+\end{itemize}
+
+\subsection{Coeficiente de sustentación $C_L$ vs ángulo de ataque $\alpha$}
+
+La Fig.~\ref{fig:CL_vs_alpha_ej1} presenta la variación del coeficiente de sustentación con el ángulo de ataque.
+
+\begin{figure}[H!]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Ejercicio1/CL_vs_alpha.png}
+    \caption{Coeficiente de sustentación $C_L$ en función del ángulo de ataque $\alpha$.}
+    \label{fig:CL_vs_alpha_ej1}
+\end{figure}
+
+\textbf{Análisis:} La curva $C_L$ vs $\alpha$ presenta linealidad en todo el rango analizado ($-10^\circ$ a $25^\circ$), característico del flujo potencial que no captura el desprendimiento de la capa límite. El ángulo de sustentación nula determinado es $\alpha_{L=0} \approx -4.3^\circ$, valor negativo que indica que el perfil genera sustentación positiva incluso a ángulo de ataque nulo debido a su curvatura (camber). A $\alpha = 0^\circ$, se obtiene $C_L(0^\circ) \approx 0.065$, confirmando cuantitativamente el efecto de la curvatura del perfil.
+
+nd{document}

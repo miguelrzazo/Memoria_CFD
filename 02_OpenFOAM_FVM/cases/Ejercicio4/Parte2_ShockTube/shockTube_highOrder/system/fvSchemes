@@ -16,7 +16,7 @@ FoamFile
 
 ddtSchemes
 {
-    default         backward;
+    default         CrankNicolson 0.5;
 }
 
 gradSchemes
@@ -28,11 +28,11 @@ divSchemes
 {
     default             none;
 
-    div(phi,U)          Gauss vanAlbada;
-    div(phid,p)         Gauss vanAlbada;
-    div(phi,e)          Gauss vanAlbada;
-    div(phi,K)          Gauss vanAlbada;
-    div(phi,(p|rho))    Gauss vanAlbada;
+    div(phi,U)          Gauss linearUpwind grad(U);
+    div(phid,p)         Gauss linearUpwind grad(p);
+    div(phi,e)          Gauss linearUpwind grad(e);
+    div(phi,K)          Gauss linearUpwind grad(K);
+    div(phi,(p|rho))    Gauss linearUpwind grad(p);
 
     div(((rho*nuEff)*dev2(T(grad(U))))) Gauss linear;
 }

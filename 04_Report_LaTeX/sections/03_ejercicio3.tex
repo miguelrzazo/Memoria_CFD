@@ -236,19 +236,6 @@ La forma parabólica característica se observa claramente. El factor de eficien
 
 donde $AR = b^2/S$ es el alargamiento del ala de referencia.
 
-\subsection{Eficiencia aerodinámica}
-
-La Fig.~\ref{fig:eficiencia_VLM} muestra la eficiencia aerodinámica ($C_L/C_{Di}$) en función del ángulo de ataque.
-
-\begin{figure}[h!]
-    \centering
-    \includegraphics[width=0.8\textwidth]{Ejercicio3/eficiencia.png}
-    \caption{Eficiencia aerodinámica $C_L/C_{Di}$ en función del ángulo de ataque.}
-    \label{fig:eficiencia_VLM}
-\end{figure}
-
-La máxima eficiencia aerodinámica se alcanza a ángulos de ataque moderados ($\alpha \approx 2-3^\circ$), donde el equilibrio entre sustentación y resistencia inducida es óptimo. A ángulos elevados, la eficiencia decrece debido al aumento cuadrático de la resistencia inducida.
-
 \subsection{Distribución de circulación}
 
 La Fig.~\ref{fig:Gamma_VLM} presenta la distribución de circulación a lo largo de la envergadura para ambas alas y diferentes ángulos de ataque.
@@ -270,16 +257,34 @@ La Fig.~\ref{fig:Gamma_VLM} presenta la distribución de circulación a lo largo
     \item \textbf{Efectos de la flecha:} El ángulo de flecha produce una distribución de circulación más uniforme a lo largo de la envergadura, mejorando la eficiencia aerodinámica.
 \end{enumerate}
 
+\subsection{Distribución de carga sustentadora}
+
+La Fig.~\ref{fig:carga_distribucion_VLM} muestra la distribución de carga sustentadora ($dL/dy$) a lo largo de la envergadura para ambas alas a $\alpha = 5^\circ$. A diferencia de representaciones continuas que pueden mostrar efectos de discretización (\textit{sawtooth}), esta figura presenta únicamente los valores puntuales en cada panel, facilitando la identificación de los máximos de carga y la comparación directa entre ambas alas.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\textwidth]{Ejercicio3/carga_distribucion.png}
+    \caption{Distribución de carga sustentadora $dL/dy$ a lo largo de la envergadura ($\alpha = 5^\circ$). (a) Ala principal, (b) Ala trasera. Los puntos representan los valores en cada panel sin interpolación continua.}
+    \label{fig:carga_distribucion_VLM}
+\end{figure}
+
+La distribución de carga revela patrones característicos del método Vortex Lattice:
+\begin{itemize}
+    \item \textbf{Ala principal:} La carga máxima se concentra en la región central del ala, decreciendo hacia las puntas debido a los efectos tridimensionales.
+    \item \textbf{Ala trasera:} La distribución muestra los efectos de interferencia, con carga positiva en la región de estela del ala principal.
+\end{itemize}
+
+Esta representación puntual evita los artefactos visuales de discretización, permitiendo un análisis más claro de la distribución real de cargas aerodinámicas.
+
 \subsection{Distribución del coeficiente de presión}
 
-La Fig.~\ref{fig:Cp_completa_VLM} presenta una análisis detallado de la distribución del coeficiente de presión $C_p$ a lo largo de la envergadura para diferentes ángulos de ataque. La gráfica se organiza en tres subfiguras dispuestas en formato 3×1 para facilitar la comparación entre las componentes de la configuración tándem.
+La Fig.~\ref{fig:Cp_completa_VLM} presenta una análisis detallado de la distribución del coeficiente de presión $C_p$ a lo largo de la envergadura para diferentes ángulos de ataque. La gráfica se organiza en tres subfiguras dispuestas en formato 3×1 para facilitar la comparación entre las componentes de la configuración tándem. A diferencia de representaciones continuas que pueden mostrar efectos de discretización, esta figura presenta únicamente valores puntuales en cada panel, con colores diferenciados para cada ángulo de ataque y marcadores distintos para ambas alas.
 
 \begin{figure}[h!]
     \centering
     \includegraphics[width=\textwidth]{Ejercicio3/Cp_distribucion_completa.png}
-    \caption{Distribución del coeficiente de presión $C_p$ a lo largo de la envergadura. (a) Ala principal, (b) Ala trasera, (c) Configuración completa. Los diferentes colores representan distintos ángulos de ataque $\alpha$, mientras que los tipos de línea distinguen entre ambas alas en el caso conjunto.}
+    \caption{Distribución del coeficiente de presión $C_p$ a lo largo de la envergadura. (a) Ala principal, (b) Ala trasera, (c) Configuración completa. Los colores diferencian los ángulos de ataque $\alpha$, mientras que los tipos de marcador distinguen entre ambas alas.}
     \label{fig:Cp_completa_VLM}
-\end{figure}
 \end{figure}
 
 \textbf{Análisis de la distribución de presiones:}
@@ -289,10 +294,29 @@ La Fig.~\ref{fig:Cp_completa_VLM} presenta una análisis detallado de la distrib
 
     \item \textbf{Ala trasera (Fig.~\ref{fig:Cp_completa_VLM}b):} La distribución de presiones del ala trasera es notablemente diferente debido a los efectos de interferencia aerodinámica. A ángulos de ataque bajos ($\alpha \leq 0^\circ$), se observa una distribución de presiones invertida (presión positiva en la superficie superior), correspondiente a sustentación negativa. Este comportamiento se debe al \textit{downwash} inducido por el ala principal, que supera al ángulo de ataque geométrico. A ángulos elevados ($\alpha \geq 5^\circ$), la distribución se normaliza, mostrando succión en la superficie superior con valores de $C_p$ mínimos alrededor de $-1.5$.
 
-    \item \textbf{Configuración completa (Fig.~\ref{fig:Cp_completa_VLM}c):} La subfigura inferior combina ambas alas en un único gráfico, utilizando líneas continuas para el ala principal y líneas discontinuas para el ala trasera. Esta representación permite apreciar directamente los efectos de interferencia: el ala trasera opera en condiciones de flujo perturbado por el ala principal, resultando en distribuciones de presión asimétricas y efectos de interacción complejos. Los diferentes colores permiten seguir la evolución de las distribuciones con el ángulo de ataque para ambas superficies simultáneamente.
+    \item \textbf{Configuración completa (Fig.~\ref{fig:Cp_completa_VLM}c):} La subfigura inferior combina ambas alas en un único gráfico, utilizando puntos circulares para el ala principal y puntos cuadrados para el ala trasera. Esta representación permite apreciar directamente los efectos de interferencia: el ala trasera opera en condiciones de flujo perturbado por el ala principal, resultando en distribuciones de presión asimétricas y efectos de interacción complejos. Los diferentes colores permiten seguir la evolución de las distribuciones con el ángulo de ataque para ambas superficies simultáneamente.
 \end{enumerate}
 
 La evolución de las distribuciones de presión con el ángulo de ataque refleja claramente los mecanismos físicos subyacentes: el aumento de la velocidad local en la superficie superior (principio de Bernoulli) genera succión creciente, mientras que los efectos de interferencia modifican significativamente el comportamiento del ala trasera. Esta información es crucial para el diseño de flaps, slats y otras superficies de control de alta sustentación.
+
+\subsection{Contornos de presión en superficie}
+
+Para una mejor comprensión de la distribución de presiones sobre las superficies sustentadoras, la Fig.~\ref{fig:Cp_contornos_VLM} presenta los contornos del coeficiente de presión $C_p$ en la superficie del ala para múltiples ángulos de ataque ($\alpha = -5^\circ, 0^\circ, 5^\circ, 10^\circ$). Esta representación bidimensional permite visualizar directamente la distribución de presiones sobre la superficie aerodinámica para ambas alas, facilitando la identificación de regiones de alta succión y áreas de separación potencial.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\textwidth]{Ejercicio3/Cp_contornos.png}
+    \caption{Contornos del coeficiente de presión $C_p$ en la superficie de ambas alas para múltiples ángulos de ataque. Primera fila: Ala principal, segunda fila: Ala trasera. Los colores representan valores de $C_p$ desde $-3$ (máxima succión) hasta $1$ (presión positiva).}
+    \label{fig:Cp_contornos_VLM}
+\end{figure}
+
+Los contornos de presión revelan patrones característicos del flujo potencial alrededor de las alas para cada ángulo de ataque:
+\begin{itemize}
+    \item \textbf{Ala principal:} Se observa una distribución típica de presiones con succión máxima cerca del borde de ataque en la región central del ala, decreciendo hacia las puntas debido a los efectos tridimensionales. La intensidad de la succión aumenta significativamente con el ángulo de ataque.
+    \item \textbf{Ala trasera:} Los contornos muestran los efectos de interferencia del ala principal, con distribuciones de presión modificadas por el campo de estela inducido. A ángulos negativos se observa sustentación negativa, mientras que a ángulos positivos la distribución se normaliza.
+\end{itemize}
+
+Esta representación múltiple permite comparar directamente cómo evoluciona la distribución de presiones en ambas alas con el ángulo de ataque, proporcionando una visión completa del comportamiento aerodinámico local.
 
 \subsection{Resumen de coeficientes aerodinámicos}
 

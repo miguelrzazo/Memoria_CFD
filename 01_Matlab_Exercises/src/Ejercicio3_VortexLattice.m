@@ -343,31 +343,8 @@ legend({'Ala principal', 'Ala trasera', 'Conjunto'}, ...
 saveas(fig4, fullfile(fig_dir, 'polar_drag.png'));
 fprintf('  Guardado: polar_drag.png\n');
 
-%% --- FIGURA 5: Eficiencia aerodinamica (CL/CDi vs alpha) ---
-fig5 = figure('Position', [100, 100, 800, 600], 'Color', 'w');
-hold on; grid on; box on;
-
-% Evitar division por cero
-eff_main = results.CL_main ./ max(results.CDi_main, 1e-6);
-eff_total = results.CL_total ./ max(results.CDi_total, 1e-6);
-
-plot(alphas, eff_main, '-o', 'Color', [0.2 0.4 0.8], ...
-    'MarkerFaceColor', [0.2 0.4 0.8], 'MarkerSize', 8, 'LineWidth', 2);
-plot(alphas, eff_total, '-d', 'Color', [0.2 0.6 0.2], ...
-    'MarkerFaceColor', [0.2 0.6 0.2], 'MarkerSize', 8, 'LineWidth', 2);
-
-xlabel('$\alpha$ [$^\circ$]', 'FontSize', 14);
-ylabel('$C_L / C_{Di}$ [-]', 'FontSize', 14);
-title('Eficiencia Aerodin\''amica vs \''Angulo de Ataque', 'FontSize', 14);
-legend({'Ala principal', 'Conjunto'}, 'Location', 'northeast', 'FontSize', 12);
-xlim([min(alphas)-1, max(alphas)+1]);
-ylim([-50, 100]);
-
-saveas(fig5, fullfile(fig_dir, 'eficiencia.png'));
-fprintf('  Guardado: eficiencia.png\n');
-
-%% --- FIGURA 6: Maximos de circulacion (Gamma) para cada angulo ---
-fig6 = figure('Position', [100, 100, 900, 600], 'Color', 'w');
+%% --- FIGURA 5: Máximos de circulación (Gamma) para cada angulo ---
+fig5 = figure('Position', [100, 100, 900, 600], 'Color', 'w');
 hold on; grid on; box on;
 
 % Calcular valores maximos de Gamma para cada angulo
@@ -393,11 +370,11 @@ title('Valores M\''aximos de Circulaci\''on', 'FontSize', 14);
 legend('Ala principal', 'Ala trasera', 'Location', 'northwest', 'FontSize', 12);
 xlim([min(alphas)-1, max(alphas)+1]);
 
-saveas(fig6, fullfile(fig_dir, 'Gamma_distribucion.png'));
+saveas(fig5, fullfile(fig_dir, 'Gamma_distribucion.png'));
 fprintf('  Guardado: Gamma_distribucion.png\n');
 
-%% --- FIGURA 7: Maximos de Cp para cada angulo ---
-fig7 = figure('Position', [100, 100, 900, 600], 'Color', 'w');
+%% --- FIGURA 6: Maximos de Cp para cada angulo ---
+fig6 = figure('Position', [100, 100, 900, 600], 'Color', 'w');
 hold on; grid on; box on;
 
 % Calcular valores minimos (maxima succion) de Cp para cada angulo
@@ -422,11 +399,11 @@ legend('Ala principal', 'Ala trasera', 'Location', 'southwest', 'FontSize', 12);
 xlim([min(alphas)-1, max(alphas)+1]);
 set(gca, 'YDir', 'reverse');  % Convencion aeronautica: Cp negativo arriba
 
-saveas(fig7, fullfile(fig_dir, 'Cp_distribucion.png'));
+saveas(fig6, fullfile(fig_dir, 'Cp_distribucion.png'));
 fprintf('  Guardado: Cp_distribucion.png\n');
 
-%% --- FIGURA 8: Resumen de coeficientes aerodinamicos (subplots) ---
-fig8 = figure('Position', [100, 100, 1200, 400], 'Color', 'w');
+%% --- FIGURA 7: Resumen de coeficientes aerodinamicos (subplots) ---
+fig7 = figure('Position', [100, 100, 1200, 400], 'Color', 'w');
 
 subplot(1,3,1);
 hold on; grid on; box on;
@@ -470,11 +447,11 @@ legend({'Principal', 'Trasera', 'Total'}, 'Location', 'northeast', 'FontSize', 9
 sgtitle('Resumen de Coeficientes Aerodin\''amicos - M\''etodo Vortex Lattice', ...
     'FontSize', 14, 'Interpreter', 'latex');
 
-saveas(fig8, fullfile(fig_dir, 'resumen_VLM.png'));
+saveas(fig7, fullfile(fig_dir, 'resumen_VLM.png'));
 fprintf('  Guardado: resumen_VLM.png\n');
 
-%% --- FIGURA 9: Visualizacion 3D de la geometria ---
-fig9 = figure('Position', [100, 100, 900, 700], 'Color', 'w');
+%% --- FIGURA 8: Visualizacion 3D de la geometria ---
+fig8 = figure('Position', [100, 100, 900, 700], 'Color', 'w');
 hold on; grid on; box on;
 view(45, 25);
 axis equal;
@@ -503,11 +480,11 @@ h1 = fill3(nan, nan, nan, [0.2 0.4 0.8], 'FaceAlpha', 0.6);
 h2 = fill3(nan, nan, nan, [0.8 0.2 0.2], 'FaceAlpha', 0.6);
 legend([h1, h2], {'Ala Principal', 'Ala Trasera'}, 'Location', 'northeast', 'FontSize', 12);
 
-saveas(fig9, fullfile(fig_dir, 'geometria_3D.png'));
+saveas(fig8, fullfile(fig_dir, 'geometria_3D.png'));
 fprintf('  Guardado: geometria_3D.png\n');
 
-%% --- FIGURA 10: Distribucion de Cp vs posicion en envergadura (3x1 grid) ---
-fig10 = figure('Position', [100, 100, 1200, 900], 'Color', 'w');
+%% --- FIGURA 9: Distribucion de Cp vs posicion en envergadura (3x1 grid) ---
+fig9 = figure('Position', [100, 100, 1200, 900], 'Color', 'w');
 
 % Configurar colores para angulos de ataque
 colors = [
@@ -529,8 +506,10 @@ subplot(3,1,1);
 hold on; grid on; box on;
 
 for k = 1:n_alpha
-    plot(y_main, Cp_main(:,k), 'Color', colors(k,:), 'LineStyle', '-', ...
-        'LineWidth', 2, 'DisplayName', sprintf('$\\alpha = %+.1f^\\circ$', alphas(k)));
+    % Usar puntos en lugar de lineas, con colores para diferenciar AoA
+    plot(y_main, Cp_main(:,k), 'o', 'Color', colors(k,:), ...
+        'MarkerFaceColor', colors(k,:), 'MarkerSize', 4, 'LineStyle', 'none', ...
+        'DisplayName', sprintf('$\\alpha = %+.1f^\\circ$', alphas(k)));
 end
 
 xlabel('$y$ [m]', 'FontSize', 12);
@@ -545,8 +524,10 @@ subplot(3,1,2);
 hold on; grid on; box on;
 
 for k = 1:n_alpha
-    plot(y_rear, Cp_rear(:,k), 'Color', colors(k,:), 'LineStyle', '--', ...
-        'LineWidth', 2, 'DisplayName', sprintf('$\\alpha = %+.1f^\\circ$', alphas(k)));
+    % Usar puntos en lugar de lineas, con colores para diferenciar AoA
+    plot(y_rear, Cp_rear(:,k), 's', 'Color', colors(k,:), ...
+        'MarkerFaceColor', colors(k,:), 'MarkerSize', 4, 'LineStyle', 'none', ...
+        'DisplayName', sprintf('$\\alpha = %+.1f^\\circ$', alphas(k)));
 end
 
 xlabel('$y$ [m]', 'FontSize', 12);
@@ -564,13 +545,13 @@ legend_entries = [];
 h_plots = [];
 
 for k = 1:n_alpha
-    % Ala principal (linea continua)
-    h1 = plot(y_main, Cp_main(:,k), 'Color', colors(k,:), 'LineStyle', '-', ...
-        'LineWidth', 2);
+    % Ala principal (puntos circulares)
+    h1 = plot(y_main, Cp_main(:,k), 'o', 'Color', colors(k,:), ...
+        'MarkerFaceColor', colors(k,:), 'MarkerSize', 4, 'LineStyle', 'none');
     
-    % Ala trasera (linea discontinua)
-    h2 = plot(y_rear, Cp_rear(:,k), 'Color', colors(k,:), 'LineStyle', '--', ...
-        'LineWidth', 2);
+    % Ala trasera (puntos cuadrados)
+    h2 = plot(y_rear, Cp_rear(:,k), 's', 'Color', colors(k,:), ...
+        'MarkerFaceColor', colors(k,:), 'MarkerSize', 4, 'LineStyle', 'none');
     
     if k == 1
         legend_entries = [legend_entries, h1, h2];
@@ -593,8 +574,160 @@ xlim([min([y_main; y_rear]), max([y_main; y_rear])]);
 sgtitle('Distribuci\''on de Coeficiente de Presi\''on $C_p$ - M\''etodo Vortex Lattice', ...
     'FontSize', 16, 'Interpreter', 'latex');
 
-saveas(fig10, fullfile(fig_dir, 'Cp_distribucion_completa.png'));
+saveas(fig9, fullfile(fig_dir, 'Cp_distribucion_completa.png'));
 fprintf('  Guardado: Cp_distribucion_completa.png\n');
+
+%% --- FIGURA 10: Distribucion de carga sustentadora (puntos maximos) ---
+% Seleccionar angulo de ataque para visualizacion
+alpha_plot = 5;  % [deg]
+idx_alpha = find(alphas == alpha_plot);
+
+if isempty(idx_alpha)
+    % Si no existe exactamente 5°, usar el mas cercano
+    [~, idx_alpha] = min(abs(alphas - alpha_plot));
+    alpha_plot = alphas(idx_alpha);
+end
+
+fig10 = figure('Position', [100, 100, 1000, 600], 'Color', 'w');
+
+% Calcular carga sustentadora local dL/dy = rho * V_inf * Gamma
+L_prime_main = rho * V_inf * Gamma_all(1:n_panels1, idx_alpha);
+L_prime_rear = rho * V_inf * Gamma_all(n_panels1+1:end, idx_alpha);
+
+% Subplot 1: Ala principal
+subplot(1,2,1);
+hold on; grid on; box on;
+
+% Mostrar solo puntos (sin lineas) para evitar efecto sawtooth
+plot(y_main, L_prime_main, 'o', 'Color', [0.2 0.4 0.8], ...
+    'MarkerFaceColor', [0.2 0.4 0.8], 'MarkerSize', 6, 'LineStyle', 'none');
+
+xlabel('$y$ [m]', 'FontSize', 12);
+ylabel('$dL/dy$ [N/m]', 'FontSize', 12);
+title(sprintf('Ala Principal - Distribuci\''on de Carga ($\\alpha = %.1f^\\circ$)', alpha_plot), 'FontSize', 14);
+xlim([min(y_main), max(y_main)]);
+
+% Subplot 2: Ala trasera
+subplot(1,2,2);
+hold on; grid on; box on;
+
+% Mostrar solo puntos (sin lineas) para evitar efecto sawtooth
+plot(y_rear, L_prime_rear, 's', 'Color', [0.8 0.2 0.2], ...
+    'MarkerFaceColor', [0.8 0.2 0.2], 'MarkerSize', 6, 'LineStyle', 'none');
+
+xlabel('$y$ [m]', 'FontSize', 12);
+ylabel('$dL/dy$ [N/m]', 'FontSize', 12);
+title(sprintf('Ala Trasera - Distribuci\''on de Carga ($\\alpha = %.1f^\\circ$)', alpha_plot), 'FontSize', 14);
+xlim([min(y_rear), max(y_rear)]);
+
+% Titulo general
+sgtitle('Distribuci\''on de Carga Sustentadora - Puntos M\''aximos', ...
+    'FontSize', 16, 'Interpreter', 'latex');
+
+saveas(fig10, fullfile(fig_dir, 'carga_distribucion.png'));
+fprintf('  Guardado: carga_distribucion.png\n');
+
+%% --- FIGURA 11: Contornos de Cp en la superficie del ala (grid de angulos) ---
+% Seleccionar angulos de ataque para visualizacion
+alphas_plot = [-5, 0, 5, 10];  % [deg]
+n_plot = length(alphas_plot);
+
+fig11 = figure('Position', [100, 100, 1400, 1000], 'Color', 'w');
+
+% Crear grid 2x4 para mostrar contornos de ambas alas en diferentes angulos
+for i = 1:n_plot
+    alpha_plot = alphas_plot(i);
+    idx_alpha = find(alphas == alpha_plot);
+    
+    if isempty(idx_alpha)
+        [~, idx_alpha] = min(abs(alphas - alpha_plot));
+        alpha_plot = alphas(idx_alpha);
+    end
+    
+    % Subplot para ala principal
+    subplot(2, n_plot, i);
+    hold on; grid on; box on;
+    
+    % Crear malla para contornos en el ala principal
+    n_contour = 40;  % Reducido para mejor rendimiento
+    y_contour_main = linspace(min(y_main), max(y_main), n_contour);
+    x_contour_main = linspace(0, max(chord(1:n_panels1)), n_contour);
+    
+    [X_main, Y_main] = meshgrid(x_contour_main, y_contour_main);
+    Cp_contour_main = zeros(size(X_main));
+    
+    % Interpolar Cp en la malla
+    for ii = 1:n_contour
+        for jj = 1:n_contour
+            [~, idx_panel] = min(sqrt((y_main - Y_main(ii,jj)).^2 + (bv(1:n_panels1,1) + chord(1:n_panels1).*X_main(ii,jj) - bv(1:n_panels1,1)).^2));
+            Cp_contour_main(ii,jj) = Cp_main(idx_panel, idx_alpha);
+        end
+    end
+    
+    % Graficar contornos
+    contourf(X_main, Y_main, Cp_contour_main, 15, 'LineStyle', 'none');
+    colormap('jet');
+    colorbar;
+    clim([-3, 1]);
+    
+    % Dibujar silueta del ala
+    for ii = 1:length(y_main)
+        x_start = 0;
+        x_end = chord(ii);
+        y_pos = y_main(ii);
+        plot([x_start, x_end], [y_pos, y_pos], 'k-', 'LineWidth', 1);
+    end
+    
+    xlabel('$x/c$ [-]', 'FontSize', 10);
+    ylabel('$y$ [m]', 'FontSize', 10);
+    title(sprintf('Ala Principal - $\\alpha = %.1f^\\circ$', alpha_plot), 'FontSize', 12);
+    set(gca, 'YDir', 'reverse');
+    
+    % Subplot para ala trasera
+    subplot(2, n_plot, i + n_plot);
+    hold on; grid on; box on;
+    
+    % Crear malla para contornos en el ala trasera
+    y_contour_rear = linspace(min(y_rear), max(y_rear), n_contour);
+    x_contour_rear = linspace(0, max(chord(n_panels1+1:end)), n_contour);
+    
+    [X_rear, Y_rear] = meshgrid(x_contour_rear, y_contour_rear);
+    Cp_contour_rear = zeros(size(X_rear));
+    
+    % Interpolar Cp en la malla
+    for ii = 1:n_contour
+        for jj = 1:n_contour
+            [~, idx_panel] = min(sqrt((y_rear - Y_rear(ii,jj)).^2 + (bv(n_panels1+1:end,1) + chord(n_panels1+1:end).*X_rear(ii,jj) - bv(n_panels1+1:end,1)).^2));
+            Cp_contour_rear(ii,jj) = Cp_rear(idx_panel, idx_alpha);
+        end
+    end
+    
+    % Graficar contornos
+    contourf(X_rear, Y_rear, Cp_contour_rear, 15, 'LineStyle', 'none');
+    colormap('jet');
+    colorbar;
+    clim([-3, 1]);
+    
+    % Dibujar silueta del ala
+    for ii = 1:length(y_rear)
+        x_start = 0;
+        x_end = chord(n_panels1 + ii);
+        y_pos = y_rear(ii);
+        plot([x_start, x_end], [y_pos, y_pos], 'k-', 'LineWidth', 1);
+    end
+    
+    xlabel('$x/c$ [-]', 'FontSize', 10);
+    ylabel('$y$ [m]', 'FontSize', 10);
+    title(sprintf('Ala Trasera - $\\alpha = %.1f^\\circ$', alpha_plot), 'FontSize', 12);
+    set(gca, 'YDir', 'reverse');
+end
+
+% Titulo general
+sgtitle('Contornos de $C_p$ en Superficie - ', ...
+    'FontSize', 16, 'Interpreter', 'latex');
+
+saveas(fig11, fullfile(fig_dir, 'Cp_contornos.png'));
+fprintf('  Guardado: Cp_contornos.png\n');
 
 
 %% ========================================================================
