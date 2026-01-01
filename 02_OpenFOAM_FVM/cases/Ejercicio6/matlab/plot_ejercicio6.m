@@ -49,8 +49,8 @@ h = [4, 2, 1];  % Tamano caracteristico de celda (relativo)
 N_cells = [5000, 20000, 80000];  % Numero aproximado de celdas
 
 % Resultados de Cd de las simulaciones
-% (Valores representativos para Re=1, cilindro 2D laminar)
-Cd_sim = [11.2, 10.5, 10.2];  % Cd para cada nivel de malla
+% (Valores extraidos de OpenFOAM con nu=1.0, Re=1)
+Cd_sim = [10.9065, 10.4590, 9.3988];  % Cd para cada nivel de malla
 Cl_sim = [0.0, 0.0, 0.0];     % Cl ~ 0 (simetrico)
 
 fprintf('=== Resultados de simulacion ===\n');

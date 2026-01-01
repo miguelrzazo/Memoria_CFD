@@ -1,0 +1,98 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 0.1;
+
+vertices
+(
+    (0 0 0)
+    (1 0 0)
+    (1 1 0)
+    (0 1 0)
+    (0 0 0.1)
+    (1 0 0.1)
+    (1 1 0.1)
+    (0 1 0.1)
+);
+
+
+blocks
+(
+    // High-Re mesh: coarser near walls for y+ ~ 30-100 (wall functions range)
+    // Para Re=535000, U=10m/s, H=0.1m, nu=1.869e-6 m^2/s
+    // Estimacion: u_tau ~ 0.35 m/s, y1 para y+=50: y1 = 50*nu/u_tau ~ 2.7e-4 m
+    // Con 40 celdas y grading suave, primera celda ~ 5e-4 m -> y+ ~ 90
+    hex (0 1 2 3 4 5 6 7) (20 40 1)
+    simpleGrading
+    (
+        1                       // x-direction: uniform
+        (
+            (0.5 0.5 3)         // bottom half: expansion ratio 3
+            (0.5 0.5 0.333)     // top half: inverse expansion (1/3)
+        )
+        1                       // z-direction: uniform
+    )
+);
+
+
+boundary
+(
+    movingWall
+    {
+        type wall;
+        faces
+        (
+            (3 7 6 2)
+        );
+    }
+    bottomWall
+    {
+        type wall;
+        faces
+        (
+            (1 5 4 0)
+        );
+    }
+    cyc_half0
+    {
+        type cyclic;
+        neighbourPatch cyc_half1;
+        faces
+        (
+            (0 4 7 3)
+        );
+    }
+    cyc_half1
+    {
+        type cyclic;
+        neighbourPatch cyc_half0;
+        faces
+        (
+            (2 6 5 1)
+        );
+    }
+    frontAndBack
+    {
+        type empty;
+        faces
+        (
+            (0 3 2 1)
+            (4 5 6 7)
+        );
+    }
+);
+
+
+// ************************************************************************* //

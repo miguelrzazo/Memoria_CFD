@@ -21,9 +21,9 @@ El presente trabajo integra dos enfoques complementarios para el análisis aerod
 La presente memoria se organiza en siete capítulos temáticos dedicados a cada ejercicio:
 
 \begin{enumerate}
-    \item \textbf{Capítulo 1 -- Método de Hess-Smith:} Implementación del método de paneles para el cálculo de distribuciones de presión y coeficientes aerodinámicos sobre perfiles bidimensionales. Validación contra XFLR5.
+    \item \textbf{Capítulo 1 -- Método de Hess-Smith:} Implementación del método de paneles para el cálculo de distribuciones de presión y coeficientes aerodinámicos sobre perfiles bidimensionales
 
-    \item \textbf{Capítulo 2 -- Método de Multhopp (Lifting Line):} Aplicación de la teoría de línea sustentadora a alas rectas, incluyendo efectos de alerones. Comparación MATLAB vs. XFLR5 de polares y distribuciones de carga.
+    \item \textbf{Capítulo 2 -- Método de Multhopp (Lifting Line):} Aplicación de la teoría de línea sustentadora a alas rectas, incluyendo efectos de alerones.
 
     \item \textbf{Capítulo 3 -- Método Vortex Lattice (VLM):} Extensión tridimensional a configuraciones alares complejas (tandem wing). Análisis de interferencia aerodinámica entre alas.
 
@@ -31,7 +31,7 @@ La presente memoria se organiza en siete capítulos temáticos dedicados a cada 
 
     \item \textbf{Capítulo 5 -- Wall Functions en Flujo de Couette:} Simulación de capa límite turbulenta planar con énfasis en la modelización cercana a pared. Comparación de estrategia Low-Reynolds vs. funciones de pared estándar.
 
-    \item \textbf{Capítulo 6 -- Cilindro Laminar:} Análisis del desprendimiento de vórtices en régimen laminar ($Re = 40$). Validación contra soluciones clásicas de Dennis \& Chang (1970).
+    \item \textbf{Capítulo 6 -- Verificación Numérica:} Estudio de convergencia de malla para flujo laminar alrededor de cilindro a $Re = 1$. Aplicación del Grid Convergence Index (GCI) para cuantificar la incertidumbre numérica debida a discretización espacial y validación contra solución analítica de Lamb.
 
     \item \textbf{Capítulo 7 -- Cilindro Turbulento Transitorio:} Simulación completa del flujo periódico alrededor de cilindro en régimen subcrítico con modelo RANS $k$-$\omega$ SST. Cálculo del número de Strouhal y comparación con experimentos de Roshko.
 \end{enumerate}
@@ -47,21 +47,21 @@ Las simulaciones y análisis se han llevado a cabo con las siguientes herramient
 \begin{itemize}
     \item \textbf{\textit{MATLAB} R2025b:} Para la implementación de métodos potenciales (Hess-Smith, Multhopp, VLM) y post-procesamiento de resultados OpenFOAM. Se aprovechan las capacidades de álgebra lineal y visualización de MATLAB para análisis numéricos.
 
-    \item \textbf{\textit{OpenFOAM} 13:} Software de código abierto para CFD basado en el método de volúmenes finitos. Se ejecuta mediante contenedor \textit{Docker} para garantizar la portabilidad entre plataformas.
+    \item \textbf{\textit{OpenFOAM} 13:} Software de código abierto para CFD basado en el método de volúmenes finitos.
 
     \item \textbf{\textit{ParaView} 5.12:} Software de visualización, empleado tanto en modo gráfico interactivo como mediante scripts \textit{pvpython} para captura automatizada de figuras de campos de flujo.
 
     \item \textbf{\textit{XFLR5}:} Herramienta especializada en análisis aerodinámico de bajo coste computacional, utilizada para validación de métodos potenciales. Proporciona polares de alas, distribuciones de presión y análisis de estabilidad.
 
-    \item \textbf{\LaTeX y \textit{Git}:} Para redacción de la memoria y control de versiones del proyecto.
+    \item \textbf{LATEX y \textit{Git}:} Para redacción de la memoria y control de versiones del proyecto.
 \end{itemize}
 
 \subsection*{Hardware y sistema operativo}
 
 \begin{itemize}
-    \item \textbf{Procesador:} Apple M1 (ArquitecturaARM64)
+    \item \textbf{Procesador:} Apple M1 (Arquitectura ARM64)
     \item \textbf{Memoria RAM:} 16 GB
-    \item \textbf{Sistema operativo:} macOS Tahoe 26.1 
+    \item \textbf{Sistema operativo:} macOS 26.1 (build 25B78)
     \item \textbf{Nota:} La arquitectura Apple Silicon (ARM64) requiere compatibilidad especial. OpenFOAM 13 se ejecuta en un contenedor Docker, mientras que MATLAB y ParaView funcionan de forma nativa.
 \end{itemize}
 
@@ -73,7 +73,7 @@ Con el objetivo de facilitar la reproducibilidad de los resultados y permitir un
 
 \textbf{Repositorio:}
 \begin{center}
-\url{https://github.com/MiguelRosa95/Memoria_CFD}
+\url{https://github.com/miguelrzazo/Memoria_CFD}
 \end{center}
 
 El repositorio incluye:
@@ -81,7 +81,7 @@ El repositorio incluye:
     \item Scripts MATLAB para los ejercicios 1-3 (métodos de paneles, lifting line y VLM) con figuras exportadas automáticamente.
     \item Casos completos de OpenFOAM para los ejercicios 4-7 con archivos de configuración (\texttt{0/}, \texttt{system/}, \texttt{constant/}).
     \item Scripts de post-procesamiento: MATLAB (\texttt{plot\_*.m}) para análisis numérico y Python (\texttt{pvpython}) para automatización de ParaView.
-    \item Archivos fuente \LaTeX de esta memoria con estructura de capítulos y referencias bibliográficas.
+    \item Archivos fuente LATEX de esta memoria con estructura de capítulos y referencias bibliográficas.
 \end{itemize}
 
 La estructura permite que cualquier persona con acceso al repositorio pueda reproducir exactamente los resultados presentados en esta memoria, fomentando la transparencia en el ámbito académico.

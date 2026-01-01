@@ -19,28 +19,28 @@ FoamFile
     inlet
     {
         type            patch;
-        nFaces          46;
-        startFace       5270;
+        nFaces          122;
+        startFace       18914;
     }
     outlet
     {
         type            patch;
-        nFaces          33;
-        startFace       5316;
+        nFaces          88;
+        startFace       19036;
     }
     cylinder
     {
         type            wall;
         inGroups        List<word> 1(wall);
-        nFaces          40;
-        startFace       5349;
+        nFaces          106;
+        startFace       19124;
     }
     frontAndBack
     {
         type            empty;
         inGroups        List<word> 1(empty);
-        nFaces          5505;
-        startFace       5389;
+        nFaces          19072;
+        startFace       19230;
     }
 )
 

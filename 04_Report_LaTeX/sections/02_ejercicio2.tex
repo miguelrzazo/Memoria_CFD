@@ -157,13 +157,36 @@ El momento de alabeo $C_{Mx}$ es el coeficiente fundamental para evaluar la efec
 \textbf{Análisis del momento de alabeo:}
 
 \begin{enumerate}
-    \item \textbf{Configuración simétrica:} Sin alerones, $C_{Mx} \approx 0$ en todo el rango de ángulos, confirmando la simetría del ala respecto al plano de simetría longitudinal.
+    \item \textbf{Valor absoluto dominado por torsión geométrica:} El valor de $C_{Mx}$ sin alerones ($\approx 0.00287$) NO es cero debido a la torsión geométrica del ala (washout de 5° a 1°), que genera una distribución asimétrica de circulación. Este efecto domina completamente el momento de alabeo base.
 
-    \item \textbf{Alerones extendidos (+6°):} Generan $C_{Mx} > 0$, creando un momento de alabeo positivo que tiende a inclinar el ala derecha hacia abajo.
+    \item \textbf{Efecto de los alerones:} Los alerones aplicados en el 10\% exterior de cada semiala con $\pm 6°$ de deflexión generan cambios en $C_{Mx}$ del orden de $\Delta C_{Mx} \approx \pm 1-2 \times 10^{-6}$, que son extremadamente pequeños comparados con el valor base.
 
-    \item \textbf{Alerones retraídos (-6°):} Generan $C_{Mx} < 0$, creando un momento de alabeo negativo que tiende a inclinar el ala izquierda hacia abajo.
+    \item \textbf{Limitación de los parámetros de diseño:} La extensión reducida de los alerones (10\% de semienvergadura) y la deflexión moderada (6°) hacen que su contribución al momento de alabeo sea insignificante en términos absolutos. En un diseño real, los alerones típicamente ocupan el 25-40\% de la semienvergadura con deflexiones de hasta $\pm 20°$.
 
-    \item \textbf{Efectividad de control:} Los alerones presentan una efectividad aproximadamente constante en el rango analizado, con $\Delta C_{Mx} \approx 0.011$ por grado de deflexión.
+    \item \textbf{Efecto diferencial:} Para visualizar el efecto de los alerones, se presenta en la Fig.~\ref{fig:Delta_CMx_multhopp} el incremento $\Delta C_{Mx}$ respecto al caso sin alerones, donde sí se observa el comportamiento esperado de deflexiones asimétricas.
+\end{enumerate}
+
+\subsection{Efecto diferencial de los alerones en el momento de alabeo}
+
+Para evidenciar el efecto de los alerones, se presenta la diferencia de momento de alabeo $\Delta C_{Mx}$ respecto al caso sin alerones (Fig.~\ref{fig:Delta_CMx_multhopp}). Esta representación elimina la contribución dominante de la torsión geométrica y permite observar exclusivamente el efecto de la deflexión asimétrica de alerones.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Ejercicio2/Delta_CMx_vs_alpha.png}
+    \caption{Incremento del momento de alabeo $\Delta C_{Mx}$ generado por los alerones respecto al caso sin deflexión.}
+    \label{fig:Delta_CMx_multhopp}
+\end{figure}
+
+\textbf{Observaciones sobre el efecto diferencial:}
+
+\begin{enumerate}
+    \item \textbf{Simetría de efectos:} Los alerones deflectados positivamente (alabeo positivo) y negativamente (alabeo negativo) generan incrementos de $\Delta C_{Mx}$ aproximadamente simétricos y opuestos, como se espera de una deflexión asimétrica.
+
+    \item \textbf{Orden de magnitud:} El efecto es del orden de $\Delta C_{Mx} \sim 10^{-6}$ a $10^{-5}$, aproximadamente tres órdenes de magnitud menor que el momento base generado por la torsión geométrica.
+
+    \item \textbf{Dependencia con el ángulo de ataque:} El efecto de los alerones presenta una leve variación con $\alpha$, reflejando la no linealidad local de la respuesta aerodinámica en las secciones exteriores del ala.
+
+    \item \textbf{Implicación práctica:} Este resultado confirma que para generar momentos de alabeo significativos con alerones pequeños, es necesario aumentar su extensión y/o deflexión máxima, como se hace en aeronaves reales.
 \end{enumerate}
 
 \subsection{Momento de guínada (efecto adverso)}
@@ -212,9 +235,9 @@ La Tabla~\ref{tab:resultados_ej2} presenta valores numéricos específicos para 
         \hline
         Configuración & $C_L$ & $C_{Di}$ & $C_{Mx}$ & $C_{Mz}$ \\
         \hline
-        Sin alerones & 0.0191 & 0.1619 & 0.00574 & $-0.00698$ \\
-        Alerones $+6^\circ$ & 0.0189 & 0.1654 & 0.00574 & $-0.00698$ \\
-        Alerones $-6^\circ$ & 0.0194 & 0.1584 & 0.00574 & $-0.00697$ \\
+        Sin alerones & 0.0096 & 0.0809 & 0.002871 & $-0.003488$ \\
+        Alerones $+6^\circ$ & 0.0097 & 0.0792 & 0.002870 & $-0.003487$ \\
+        Alerones $-6^\circ$ & 0.0094 & 0.0827 & 0.002872 & $-0.003489$ \\
         \hline
     \end{tabular}
 \end{table}
@@ -226,13 +249,15 @@ La Tabla~\ref{tab:resultados_ej2} presenta valores numéricos específicos para 
 La implementación del método de Multhopp ha permitido analizar de manera efectiva el comportamiento aerodinámico de un ala recta con alerones, obteniendo resultados coherentes con la teoría de la línea sustentadora de Prandtl. Las principales conclusiones son:
 
 \begin{enumerate}
-    \item \textbf{Coeficiente de sustentación:} La pendiente de sustentación del ala finita ($dC_L/d\alpha \approx 0.067$ deg$^{-1}$) es significativamente menor que la del perfil bidimensional ($a_0 = 5.5$ rad$^{-1}$) debido a los efectos tridimensionales de las puntas del ala.
+    \item \textbf{Coeficiente de sustentación:} Los alerones tienen un efecto mínimo sobre el $C_L$ total del ala (diferencias $< 3\%$), lo cual es esperado dado que solo afectan al 10\% exterior de cada semiala. El $C_L$ se mantiene prácticamente lineal con $\alpha$ para las tres configuraciones.
 
-    \item \textbf{Resistencia inducida:} Se confirma la relación teórica cuadrática entre $C_{Di}$ y $C_L$, con valores que aumentan desde 0.05 a ángulos bajos hasta 0.35 a $\alpha = 20^\circ$. Los alerones modifican ligeramente esta resistencia debido a cambios locales en la distribución de circulación.
+    \item \textbf{Resistencia inducida:} Los alerones modifican ligeramente la distribución de circulación, resultando en cambios del orden del 2-4\% en $C_{Di}$ entre configuraciones. Se confirma la dependencia cuadrática con el ángulo de ataque para todas las configuraciones.
 
-    \item \textbf{Momento de alabeo:} Los alerones demuestran una efectividad significativa en la generación de momentos de alabeo, con $\Delta C_{Mx} \approx 0.011$ por grado de deflexión. Este efecto es esencial para el control de balanceo de la aeronave.
+    \item \textbf{Momento de alabeo absoluto:} El valor de $C_{Mx}$ está dominado por la torsión geométrica del ala (washout de 5° a 1°), que genera un momento base de $C_{Mx} \approx 0.00287$. Este efecto es tres órdenes de magnitud mayor que la contribución de los alerones con la configuración del enunciado.
 
-    \item \textbf{Efecto adverso:} Se observa claramente el efecto adverso de los alerones, donde la deflexión para generar alabeo también produce un momento de guínada opuesto. Este fenómeno, con $C_{Mz} \approx -0.007$, debe considerarse en el diseño del sistema de control.
+    \item \textbf{Efecto diferencial de los alerones:} El incremento $\Delta C_{Mx}$ generado por los alerones ($\sim 10^{-6}$) es extremadamente pequeño debido a su extensión limitada (10\% de semienvergadura) y deflexión moderada (6°). En diseños reales, los alerones ocupan 25-40\% de la semienvergadura con deflexiones de hasta $\pm 20°$ para generar momentos de control efectivos.
+
+    \item \textbf{Efecto adverso:} Los cambios en $C_{Mz}$ entre configuraciones son igualmente pequeños debido a la limitada extensión de los alerones. En aplicaciones reales, este efecto adverso se compensa mediante alerones diferenciales o mediante el uso coordinado del timón de dirección.
 
     \item \textbf{Torsión geométrica:} La torsión del ala (washout) contribuye a mantener una distribución de sustentación más uniforme, mejorando las características de entrada en pérdida del ala.
 

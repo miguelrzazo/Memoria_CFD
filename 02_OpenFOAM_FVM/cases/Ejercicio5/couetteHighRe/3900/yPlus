@@ -1,0 +1,96 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       volScalarField;
+    location    "3900";
+    object      yPlus;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [];
+
+internalField   uniform 0;
+
+boundaryField
+{
+    movingWall
+    {
+        type            calculated;
+        value           nonuniform List<scalar> 
+20
+(
+73.9369
+73.9369
+73.9369
+73.9368
+73.9367
+73.9368
+73.9368
+73.9368
+73.9368
+73.9368
+73.9367
+73.9366
+73.9366
+73.9366
+73.9367
+73.9368
+73.9369
+73.9369
+73.9369
+73.937
+)
+;
+    }
+    bottomWall
+    {
+        type            calculated;
+        value           nonuniform List<scalar> 
+20
+(
+63.6969
+63.6971
+63.6974
+63.6976
+63.6978
+63.6978
+63.6975
+63.6974
+63.6973
+63.6971
+63.6969
+63.6967
+63.6968
+63.6967
+63.6967
+63.6967
+63.6967
+63.6968
+63.6967
+63.6968
+)
+;
+    }
+    cyc_half0
+    {
+        type            cyclic;
+    }
+    cyc_half1
+    {
+        type            cyclic;
+    }
+    frontAndBack
+    {
+        type            empty;
+    }
+}
+
+
+// ************************************************************************* //

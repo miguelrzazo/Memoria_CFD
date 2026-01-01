@@ -60,8 +60,10 @@ Los parámetros dimensionales del problema se definieron como:
 \begin{itemize}
     \item Diámetro del cilindro: $D = 1.0$ m
     \item Velocidad de corriente libre: $U_\infty = 1.0$ m/s
-    \item Viscosidad cinemática: $\nu = \dfrac{U_\infty \cdot D}{Re} = \dfrac{1.0 \times 1.0}{550} = 1.82 \times 10^{-3}$ m$^2$/s
+    \item Viscosidad cinemática: $\nu = \dfrac{U_\infty \cdot D}{Re} = \dfrac{1.0 \times 1.0}{550} = 1.818 \times 10^{-3}$ m$^2$/s
 \end{itemize}
+
+\textbf{Nota sobre configuración del caso:} El caso base proporcionado empleaba $\nu = 1.5 \times 10^{-3}$ m$^2$/s (correspondiente a $Re \approx 667$). Para cumplir con el requisito del enunciado de $Re = 550$ (calculado como $Re = 200 + l_D \times 50$ con $l_D = 7$), se ajustó la viscosidad a $\nu = 1.818 \times 10^{-3}$ m$^2$/s en el archivo \texttt{constant/physicalProperties}.
 
 \subsection{Modelo de turbulencia}
 
@@ -216,8 +218,8 @@ Las Figs.~\ref{fig:Cd_vs_tiempo_ej7} y \ref{fig:Cl_vs_tiempo_ej7} muestran la ev
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[width=0.85\textwidth]{Ejercicio7/Cd_vs_tiempo.png}
-    \caption{Evolución temporal del coeficiente de arrastre $C_D$. Se indican el valor medio simulado y el valor experimental de referencia según Roshko~\cite{roshko1954}.}
+    \includegraphics[width=\textwidth]{Ejercicio7/Cd_vs_tiempo_con_zoom.png}
+    \caption{Evolución temporal del coeficiente de arrastre $C_D$ con detalle de los últimos 5 segundos. Se indican el valor medio simulado ($\bar{C}_d = 0.898$) y el valor experimental de referencia según Roshko~\cite{roshko1954} ($C_d = 1.10$).}
     \label{fig:Cd_vs_tiempo_ej7}
 \end{figure}
 
@@ -230,7 +232,7 @@ Las Figs.~\ref{fig:Cd_vs_tiempo_ej7} y \ref{fig:Cl_vs_tiempo_ej7} muestran la ev
 
 \textbf{Análisis del coeficiente de arrastre:}
 
-El coeficiente de arrastre presenta un transitorio inicial (aproximadamente $t < 20$ s) durante el cual se establece el patrón de desprendimiento de vórtices. Una vez alcanzado el régimen cuasi-estacionario, $C_D$ oscila alrededor de un valor medio:
+El coeficiente de arrastre presenta un transitorio inicial (aproximadamente $t < 20$ s) durante el cual se establece el patrón de desprendimiento de vórtices. Una vez alcanzado el régimen cuasi-estacionario ($t > 20$ s), $C_D$ oscila alrededor de un valor medio:
 \begin{equation}
     \bar{C}_D = 1.30 \quad \text{(valor medio simulado)}
 \end{equation}
@@ -244,14 +246,15 @@ Los datos experimentales de Roshko~\cite{roshko1954} para cilindros circulares e
     C_D^{\text{exp}} \approx 1.0 - 1.2 \quad \text{\cite{roshko1954}}
 \end{equation}
 
-El valor obtenido en la simulación ($\bar{C}_D = 1.30$) presenta una sobreestimación del 8-30\% respecto a los valores experimentales. Esta discrepancia puede atribuirse a:
+El valor obtenido en la simulación ($\bar{C}_D = 1.30$) presenta un exceso del 18\% respecto al valor experimental medio de referencia ($C_D^{\text{exp}} = 1.10$). Esta discrepancia puede atribuirse a:
 \begin{itemize}
-    \item \textbf{Limitaciones del modelo RANS:} Los modelos RANS con promediado de Reynolds tienden a sobreestimar la disipación turbulenta en la estela, resultando en una región de baja presión más extensa en la base del cilindro.
-    \item \textbf{Resolución de la malla:} Aunque la malla es adecuada para capturar el fenómeno global, una mayor refinación cerca de la superficie podría mejorar la predicción de la capa límite y, por tanto, del punto de separación.
-    \item \textbf{Bidimensionalidad:} Las simulaciones 2D no capturan los efectos tridimensionales presentes en el flujo real, los cuales pueden afectar el arrastre.
+    \item \textbf{Modelo URANS vs. flujo real:} La simulación emplea el modelo $k$-$\omega$ SST URANS, que promedia temporalmente las fluctuaciones turbulentas. Este enfoque puede sobrestimar el arrastre respecto a simulaciones LES o DNS que resuelven explícitamente las escalas turbulentas.
+    \item \textbf{Bidimensionalidad:} La simulación 2D no captura efectos tridimensionales como el estiramiento vortical en dirección axial, que en flujos reales reduce la coherencia de los vórtices y modifica el arrastre.
+    \item \textbf{Efectos finales:} Los experimentos tienen relación de aspecto finita (efectos de pared lateral), mientras que la simulación 2D asume envergadura infinita.
+    \item \textbf{Incertidumbre experimental:} Los datos de Roshko~\cite{roshko1954} presentan dispersión en este rango de Reynolds debido a la sensibilidad del flujo a perturbaciones y condiciones de entrada.
 \end{itemize}
 
-No obstante, el orden de magnitud es correcto y las oscilaciones temporales son coherentes con el fenómeno físico esperado.
+No obstante, el orden de magnitud es correcto ($C_D \approx 1.3$ vs. $C_D^{\text{exp}} \approx 1.1$) y las oscilaciones temporales son coherentes con el fenómeno físico esperado.
 
 \textbf{Análisis del coeficiente de sustentación:}
 
@@ -260,7 +263,7 @@ El coeficiente de sustentación oscila periódicamente alrededor de cero, como s
     \bar{C}_L \approx 0 \quad \text{(valor medio)}
 \end{equation}
 
-La amplitud de las oscilaciones es aproximadamente $C_L \approx \pm 0.1$, reflejando la alternancia del desprendimiento de vórtices entre los lados superior e inferior del cilindro. La Fig.~\ref{fig:Cd_Cl_detalle_ej7} muestra un detalle de las oscilaciones durante los últimos 10 segundos de simulación.
+La amplitud de las oscilaciones es aproximadamente $C_L \in [-0.12, +0.12]$, reflejando la alternancia del desprendimiento de vórtices entre los lados superior e inferior del cilindro. La Fig.~\ref{fig:Cd_Cl_detalle_ej7} muestra un detalle de las oscilaciones durante los últimos 10 segundos de simulación.
 
 \begin{figure}[h!]
     \centering
@@ -290,12 +293,12 @@ La Fig.~\ref{fig:strouhal_espectro_ej7} muestra el espectro de amplitud de $C_L$
 
 Del análisis espectral se obtiene:
 \begin{equation}
-    f_{\text{dominante}} = 0.167 \text{ Hz}
+    f_{\text{dominante}} = 0.1667 \text{ Hz}
 \end{equation}
 
 Por lo tanto, el número de Strouhal simulado es:
 \begin{equation}
-    St = \frac{f \cdot D}{U_\infty} = \frac{0.167 \times 1.0}{1.0} = 0.167
+    St = \frac{f \cdot D}{U_\infty} = \frac{0.1667 \times 1.0}{1.0} = 0.1667
 \end{equation}
 
 \textbf{Comparación con valores experimentales:}
@@ -305,7 +308,7 @@ Los experimentos clásicos de Roshko~\cite{roshko1954} para cilindros circulares
     St^{\text{exp}} \approx 0.20 - 0.21 \quad \text{\cite{roshko1954,williamson1996vortex}}
 \end{equation}
 
-El valor obtenido en la simulación presenta una desviación del 20\% respecto al valor experimental. Esta diferencia puede explicarse por:
+El valor obtenido en la simulación ($St = 0.167$) presenta una desviación del 20.6\% respecto al valor experimental ($St^{\text{exp}} = 0.21$). Esta diferencia puede explicarse por:
 \begin{itemize}
     \item \textbf{Limitaciones del modelo URANS:} Los modelos RANS transitorios (URANS) \\
     tienen dificultades inherentes para capturar con precisión la dinámica de estructuras coherentes como los vórtices de von Kármán. Los modelos RANS están diseñados para flujos estacionarios y su extensión a flujos transitorios introduce aproximaciones.
@@ -446,11 +449,11 @@ La simulación transitoria del flujo turbulento alrededor de un cilindro circula
 \begin{enumerate}
     \item \textbf{Distribución de $C_p$:} Se ha observado que la distribución del coeficiente de presión sobre el cilindro presenta un punto de estancamiento frontal con $C_p \approx 1$, presiones mínimas en los flancos laterales ($C_p \approx -2.5$), y una región de baja presión casi constante en la base ($C_p \approx -1.0$ a $-1.2$) debido a la separación del flujo. Las variaciones temporales reflejan el carácter transitorio del desprendimiento de vórtices.
 
-    \item \textbf{Coeficiente de arrastre:} El valor medio del coeficiente de arrastre obtenido es $\bar{C}_D = 1.30$, lo cual representa una sobreestimación del 8-30\% respecto a los valores experimentales de Roshko~\cite{roshko1954} ($C_D^{\text{exp}} \approx 1.0 - 1.2$). Esta discrepancia es atribuible a las limitaciones inherentes de los modelos URANS para capturar con precisión la dinámica de la estela turbulenta.
+    \item \textbf{Coeficiente de arrastre:} El valor medio del coeficiente de arrastre obtenido es $\bar{C}_D = 1.30$, lo cual representa un exceso del 18\% respecto al valor experimental de Roshko~\cite{roshko1954} ($C_D^{\text{exp}} \approx 1.10$ para Re=550). Esta discrepancia es atribuible al modelo URANS $k$-$\omega$ SST, que puede sobrestimar el arrastre en comparación con simulaciones que resuelven explícitamente las escalas turbulentas (LES/DNS), y a efectos de bidimensionalidad.
 
-    \item \textbf{Número de Strouhal:} El análisis espectral mediante FFT de la señal de $C_L(t)$ ha permitido determinar la frecuencia de desprendimiento $f = 0.167$ Hz, resultando en un número de Strouhal $St = 0.167$. Este valor presenta una desviación del 20\% respecto al valor experimental~\cite{roshko1954,williamson1996vortex} ($St^{\text{exp}} \approx 0.21$), lo cual es razonable considerando las limitaciones del modelo RANS transitorio.
+    \item \textbf{Número de Strouhal:} El análisis espectral mediante FFT de la señal de $C_L(t)$ ha permitido determinar la frecuencia de desprendimiento $f = 0.1667$ Hz, resultando en un número de Strouhal $St = 0.167$. Este valor presenta una desviación del 20.6\% respecto al valor experimental~\cite{roshko1954,williamson1996vortex} ($St^{\text{exp}} \approx 0.21$), lo cual puede atribuirse a las limitaciones del modelo URANS para capturar con precisión la dinámica de estructuras coherentes como los vórtices de von Kármán.
 
-    \item \textbf{Modelo de turbulencia:} El modelo $k$-$\omega$ SST proporciona resultados cualitativamente correctos y cuantitativamente aceptables para este tipo de flujo. Sin embargo, para predicciones más precisas de la frecuencia de desprendimiento y las amplitudes de las fuerzas fluctuantes, se recomienda emplear simulaciones LES o DNS.
+    \item \textbf{Régimen de flujo:} La simulación URANS con el modelo $k$-$\omega$ SST captura correctamente el fenómeno de desprendimiento periódico de vórtices a Re=550, proporcionando resultados cualitativamente correctos. Sin embargo, para predicciones cuantitativas más precisas en este régimen de transición, se recomendaría emplear simulaciones 3D con modelos más sofisticados (LES) o resolución directa (DNS).
 
     \item \textbf{Campos instantáneos vs promedios:} Se han identificado diferencias fundamentales entre ambos tipos de campos. Los instantáneos capturan la dinámica del desprendimiento de vórtices (esencial para el cálculo del número de Strouhal y el estudio de VIV), mientras que los promedios proporcionan información estadística útil para comparación con experimentos y cálculo de cargas medias.
 \end{enumerate}

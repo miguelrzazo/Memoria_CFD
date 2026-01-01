@@ -187,7 +187,7 @@ ylim([0 1]);
 % Leyenda comun fuera de los subplots
 lgd = legend('Orientation', 'horizontal', 'Position', [0.1 0.02 0.8 0.05]);
 
-sgtitle(sprintf('Validación del tubo de choque de Sod ($t^* = %.1f$)', t_star_val), ...
+sgtitle(sprintf('Validación del tubo de choque de Sod '), ...
     'Interpreter', 'latex', 'FontSize', 14);
 
 % Guardar figura
@@ -256,7 +256,7 @@ ylim([0 1]);
 % Leyenda comun fuera de los subplots
 lgd = legend('Orientation', 'horizontal', 'Position', [0.1 0.02 0.8 0.05]);
 
-sgtitle(sprintf('Comparación de esquemas numéricos ($t^* = %.2f$)', t_star_cmp), ...
+sgtitle('Comparación de esquemas numéricos', ...
     'Interpreter', 'latex', 'FontSize', 14);
 
 % Guardar figura
@@ -303,7 +303,7 @@ fig4 = figure('Position', [100 100 600 500], 'Color', 'w');
 t_max = 0.3;  % t* maximo
 
 % Velocidades caracteristicas normalizadas (de la teoria de Sod)
-% Onda de rarefaccion: cabeza a -1, cola a u*-a* ~ -0.6
+% Onda de Expansion: cabeza a -1, cola a u*-a* ~ -0.6
 v_rar_head = -1.0;  % -a_L/a_L = -1
 v_rar_tail = -0.38; % (u* - a*)/a_L
 
@@ -315,7 +315,7 @@ v_shock = 1.386;
 
 hold on;
 
-% Onda de rarefaccion (abanico)
+% Onda de Expansion (abanico)
 n_rar = 10;
 v_rar = linspace(v_rar_head, v_rar_tail, n_rar);
 for i = 1:n_rar
@@ -349,7 +349,7 @@ h(1) = plot(nan, nan, '-', 'Color', [0 0.4 0.8], 'LineWidth', 2);
 h(2) = plot(nan, nan, '-', 'Color', [0 0.6 0], 'LineWidth', 2);
 h(3) = plot(nan, nan, '-', 'Color', [0.8 0 0], 'LineWidth', 2);
 h(4) = plot(nan, nan, 'k--', 'LineWidth', 1);
-legend(h, {'Rarefaccion', 'Contacto', 'Choque', 'Tiempos analisis'}, 'Location', 'northeast');
+legend(h, {'Expansion', 'Contacto', 'Choque', 'Tiempos analisis'}, 'Location', 'northeast');
 
 hold off;
 

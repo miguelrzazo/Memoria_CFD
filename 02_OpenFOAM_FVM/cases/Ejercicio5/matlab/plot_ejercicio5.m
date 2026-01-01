@@ -1,352 +1,483 @@
-%% EJERCICIO 5: Analisis de Wall Functions - Planar Couette Flow
-% Re = 535000 (ultima cifra DNI = 7)
-% Comparacion con ley de pared analitica
-% Miguel Rosa - Master Ingenieria Aeronautica 2025
+%% ============= EJERCICIO 5: Flujo Couette Turbulento =============
+% Comparacion de modelos Low-Re y High-Re (wall functions)
+% Autor: Miguel Rosa
+% Fecha: Enero 2026
+%
+% NOTA: Para la ley de la pared en flujo Couette, se mide desde la pared
+% movil (y=H) porque ahi esta el mayor esfuerzo cortante.
+%
+% y_wall = H - y  (distancia desde pared movil)
+% u_rel = U_wall - u  (velocidad relativa a la pared movil)
+% u+ = u_rel / u_tau
+% y+ = y_wall * u_tau / nu
 
-clearvars; close all; clc;
+clear; clc; close all;
 
-%% Parametros del problema
-Re = 535000;        % Numero de Reynolds (5e5 + 7*5000)
-H = 0.1;            % Altura del canal [m]
-U_wall = 10;        % Velocidad de la pared movil [m/s]
-nu = U_wall * H / Re;  % Viscosidad cinematica [m2/s]
-rho = 1.0;          % Densidad (normalizada)
+%% ============= PARAMETROS DEL PROBLEMA ================
+ultima_cifra_DNI = 7;
+Re_H = 500000 + ultima_cifra_DNI * 5000;  % Re = 535000
 
-fprintf('=== EJERCICIO 5: Planar Couette - Wall Functions ===\n');
-fprintf('Re = %d\n', Re);
-fprintf('H = %.2f m\n', H);
-fprintf('U_wall = %.1f m/s\n', U_wall);
-fprintf('nu = %.6e m2/s\n\n', nu);
+U_wall = 10;        % m/s - velocidad de la pared superior
+H = 0.1;            % m - altura del canal
+rho = 1.2;          % kg/m^3 - densidad del aire
+nu = U_wall * H / Re_H;  % viscosidad cinematica
 
-%% Directorios
-case_dir = '../../cases/Ejercicio5/planarCouette/';
-output_dir = '../../figures/Ejercicio5/';
+fprintf('============================================\n');
+fprintf(' EJERCICIO 5 - Flujo Couette Turbulento\n');
+fprintf('============================================\n');
+fprintf(' Ultima cifra DNI: %d\n', ultima_cifra_DNI);
+fprintf(' Reynolds basado en H: Re_H = %d\n', Re_H);
+fprintf(' Viscosidad cinematica: nu = %.3e m^2/s\n', nu);
+fprintf(' Velocidad pared: U_wall = %.1f m/s\n', U_wall);
+fprintf(' Altura canal: H = %.3f m\n', H);
+fprintf('============================================\n\n');
 
-% Crear directorio de salida si no existe
-if ~exist(output_dir, 'dir')
-    mkdir(output_dir);
-end
+%% ============= RUTAS ================
+base_path = '/Users/miguelrosa/CFD/Practica/Memoria_CFD/02_OpenFOAM_FVM/cases/Ejercicio5';
+case_lowre = fullfile(base_path, 'couetteLowRe');
+case_highre = fullfile(base_path, 'couetteHighRe');
+fig_path = '/Users/miguelrosa/CFD/Practica/Memoria_CFD/02_OpenFOAM_FVM/figures/Ejercicio5';
 
-%% Buscar ultimo tiempo disponible
-time_dirs = dir(case_dir);
-time_dirs = time_dirs([time_dirs.isdir]);
-times = zeros(length(time_dirs), 1);
-k = 0;
-for i = 1:length(time_dirs)
-    name = time_dirs(i).name;
-    if ~strcmp(name, '.') && ~strcmp(name, '..') && ~strcmp(name, 'constant') && ~strcmp(name, 'system')
-        t = str2double(name);
-        if ~isnan(t) && t > 0
-            k = k + 1;
-            times(k) = t;
-        end
-    end
-end
-times = times(1:k);
+if ~exist(fig_path, 'dir'), mkdir(fig_path); end
 
-if isempty(times)
-    fprintf('NOTA: No se encontraron tiempos de simulacion.\n');
-    fprintf('Generando graficas teoricas...\n');
-    t_final = 0;
-else
-    times = sort(times);
-    t_final = times(end);
-    fprintf('Tiempo final encontrado: %.1f s\n', t_final);
-end
+%% ============= SOLUCION ANALITICA (Laminar) ================
+y_analitico = linspace(0, H, 200);
+u_analitico = U_wall * y_analitico / H;
 
-%% Leer perfil de velocidad desde postProcessing o directamente
-% Intentar leer de postProcessing/graphUniform
-graph_file = [case_dir, sprintf('%g', t_final), '/uniform/UMean'];
+%% ============= LECTURA DE DATOS DE OPENFOAM ================
+fprintf('Leyendo datos de OpenFOAM...\n');
+time_str = '4000';
 
-% Alternativa: leer el campo U del ultimo tiempo
-U_file = [case_dir, sprintf('%g', t_final), '/U'];
+% Leer perfiles de velocidad desde centros de celda (datos reales, no interpolados)
+[y_low, u_low] = read_profile_cellcentre(case_lowre, time_str);
+[y_high, u_high] = read_profile_cellcentre(case_highre, time_str);
 
-if exist(U_file, 'file')
-    fprintf('Leyendo campo U desde: %s\n', U_file);
-    
-    % Leer archivo de OpenFOAM
-    fid = fopen(U_file, 'r');
-    content = fread(fid, '*char')';
-    fclose(fid);
-    
-    % Buscar el campo interno
-    start_idx = strfind(content, 'internalField');
-    if ~isempty(start_idx)
-        % Extraer datos de velocidad
-        % Buscar el bloque de datos
-        bracket_start = strfind(content(start_idx:end), '(');
-        bracket_end = strfind(content(start_idx:end), ')');
-        
-        % Parsear manualmente los vectores de velocidad
-        pattern = '\(([0-9.e+-]+)\s+([0-9.e+-]+)\s+([0-9.e+-]+)\)';
-        matches = regexp(content, pattern, 'tokens');
-        
-        n_cells = length(matches);
-        U_data = zeros(n_cells, 3);
-        for i = 1:n_cells
-            U_data(i,1) = str2double(matches{i}{1});
-            U_data(i,2) = str2double(matches{i}{2});
-            U_data(i,3) = str2double(matches{i}{3});
-        end
-        
-        fprintf('Leidos %d valores de velocidad\n', n_cells);
-    end
-else
-    fprintf('Archivo U no encontrado. Generando datos sinteticos para demo...\n');
-    % Generar datos sinteticos basados en solucion analitica de Couette turbulento
-    n_cells = 500;
-end
+fprintf('  Low-Re:  %d puntos (centros de celda)\n', length(y_low));
+fprintf('  High-Re: %d puntos (centros de celda)\n', length(y_high));
 
-%% Leer coordenadas de las celdas (cellCentres)
-% En OpenFOAM, las coordenadas de los centros de celda estan en constant/polyMesh/cellCentres
-% o se pueden calcular a partir de la malla
+% Leer wallShearStress de movingWall (donde esta el mayor esfuerzo)
+tau_rho_low = read_tau_wall(case_lowre, time_str, 'movingWall');
+tau_rho_high = read_tau_wall(case_highre, time_str, 'movingWall');
 
-% Para Couette plano con grading, asumimos distribucion conocida
-% La malla tiene 500 celdas en y con grading
+% Calcular u_tau = sqrt(|tau/rho|)
+u_tau_low = sqrt(abs(tau_rho_low));
+u_tau_high = sqrt(abs(tau_rho_high));
 
-ny = 500;  % Numero de celdas en y
-y_coords = zeros(ny, 1);
+tau_w_low = rho * abs(tau_rho_low);
+tau_w_high = rho * abs(tau_rho_high);
 
-% Reconstruir distribucion de celdas basada en blockMeshDict
-% Grading: (0.2 0.4 20), (0.6 0.2 1), (0.2 0.4 0.05)
-% Region 1: 0-20% de H, 40% de celdas, expansion 20
-% Region 2: 20-80% de H, 20% de celdas, expansion 1
-% Region 3: 80-100% de H, 40% de celdas, expansion 0.05
+fprintf('\nEsfuerzo cortante en movingWall:\n');
+fprintf('  Low-Re:  tau_w = %.4f Pa, u_tau = %.4f m/s\n', tau_w_low, u_tau_low);
+fprintf('  High-Re: tau_w = %.4f Pa, u_tau = %.4f m/s\n', tau_w_high, u_tau_high);
 
-n1 = round(0.4 * ny);  % 200 celdas
-n2 = round(0.2 * ny);  % 100 celdas
-n3 = round(0.4 * ny);  % 200 celdas
+% Leer y+ de OpenFOAM
+yplus_low = read_yplus(case_lowre, time_str, 'movingWall');
+yplus_high = read_yplus(case_highre, time_str, 'movingWall');
 
-% Region 1 (cerca de pared inferior, y=0 a y=0.02)
-y1_start = 0;
-y1_end = 0.2 * H;
-r1 = 20^(1/(n1-1));  % Ratio de expansion
-dy1_first = (y1_end - y1_start) * (1 - r1) / (1 - r1^n1);
-for i = 1:n1
-    if i == 1
-        y_coords(i) = y1_start + dy1_first/2;
-    else
-        dy = dy1_first * r1^(i-1);
-        y_coords(i) = y_coords(i-1) + (dy1_first * r1^(i-2) + dy)/2;
-    end
-end
+fprintf('\ny+ en primera celda (OpenFOAM):\n');
+fprintf('  Low-Re:  y+ = %.2f (objetivo: ~1)\n', yplus_low);
+fprintf('  High-Re: y+ = %.2f (objetivo: 30-300)\n', yplus_high);
 
-% Region 2 (centro, y=0.02 a y=0.08) - uniforme
-dy2 = (0.6 * H) / n2;
-for i = 1:n2
-    y_coords(n1 + i) = 0.2*H + (i-0.5) * dy2;
-end
+%% ============= COORDENADAS ADIMENSIONALES ================
+% Para flujo Couette, medir desde la pared movil (y=H)
+% y_wall = H - y
+% u_rel = U_wall - u
 
-% Region 3 (cerca de pared superior, y=0.08 a y=0.1)
-y3_start = 0.8 * H;
-y3_end = H;
-r3 = 0.05^(1/(n3-1));
-dy3_first = (y3_end - y3_start) * (1 - r3) / (1 - r3^n3);
-for i = 1:n3
-    if i == 1
-        y_coords(n1 + n2 + i) = y3_start + dy3_first/2;
-    else
-        dy = dy3_first * r3^(i-1);
-        y_coords(n1 + n2 + i) = y_coords(n1 + n2 + i - 1) + (dy3_first * r3^(i-2) + dy)/2;
-    end
-end
+y_wall_low = H - y_low;
+y_wall_high = H - y_high;
 
-% Simplificacion: usar coordenadas uniformes para primera aproximacion
-y_coords = linspace(H/(2*ny), H - H/(2*ny), ny)';
+u_rel_low = U_wall - u_low;
+u_rel_high = U_wall - u_high;
 
-%% Estimar velocidad de friccion (u_tau)
-% Para flujo Couette turbulento, tau_w = mu * dU/dy |_wall
-% Primera aproximacion: tau_w ~ 0.5 * rho * U_wall^2 * Cf
-% donde Cf ~ 0.074 * Re^(-0.2) para placa plana turbulenta
+% y+ y u+ 
+y_plus_low = y_wall_low * u_tau_low / nu;
+y_plus_high = y_wall_high * u_tau_high / nu;
 
-Cf = 0.074 * Re^(-0.2);
-tau_w = 0.5 * rho * U_wall^2 * Cf;
-u_tau = sqrt(tau_w / rho);
+u_plus_low = u_rel_low / u_tau_low;
+u_plus_high = u_rel_high / u_tau_high;
 
-fprintf('\nEstimacion inicial:\n');
-fprintf('Cf = %.6f\n', Cf);
-fprintf('tau_w = %.4f Pa\n', tau_w);
-fprintf('u_tau = %.4f m/s\n', u_tau);
-
-%% Generar perfil de velocidad teorico para Couette turbulento
-% Para Couette con pared inferior fija y superior movil:
-% Subcapa viscosa (y+ < 5): U+ = y+
-% Capa logaritmica (y+ > 30): U+ = (1/kappa) * ln(y+) + B
-% donde kappa = 0.41, B = 5.2
-
+%% ============= LEY DE LA PARED TEORICA ================
 kappa = 0.41;
 B = 5.2;
 
-% Coordenadas de pared
-y_plus = y_coords * u_tau / nu;
+% Subcapa viscosa: u+ = y+ (y+ < 5)
+y_plus_visc = linspace(0.1, 11, 100);
+u_plus_visc = y_plus_visc;
 
-% Ley de pared
-U_plus_viscous = y_plus;  % Subcapa viscosa
-U_plus_log = (1/kappa) * log(y_plus) + B;  % Capa logaritmica
+% Ley logaritmica: u+ = (1/kappa)*ln(y+) + B (y+ > 30)
+% Extendida hasta y+ = 5000 para cubrir todo el rango de High-Re
+y_plus_log = linspace(11, 5000, 300);
+u_plus_log = (1/kappa) * log(y_plus_log) + B;
 
-% Perfil compuesto (Spalding's law)
-U_plus_spalding = zeros(size(y_plus));
-for i = 1:length(y_plus)
-    yp = y_plus(i);
-    % Ecuacion implicita: y+ = U+ + exp(-kappa*B)*[exp(kappa*U+) - 1 - kappa*U+ - (kappa*U+)^2/2 - (kappa*U+)^3/6]
-    % Resolver iterativamente
-    Up = yp;  % Valor inicial
-    for iter = 1:50
-        f = Up + exp(-kappa*B)*(exp(kappa*Up) - 1 - kappa*Up - (kappa*Up)^2/2 - (kappa*Up)^3/6) - yp;
-        df = 1 + exp(-kappa*B)*(kappa*exp(kappa*Up) - kappa - kappa^2*Up - kappa^3*Up^2/2);
-        Up_new = Up - f/df;
-        if abs(Up_new - Up) < 1e-8
-            break;
-        end
-        Up = Up_new;
-    end
-    U_plus_spalding(i) = Up;
-end
+%% ============= FIGURA 1: Perfiles de Velocidad u(y) ================
+fig1 = figure('Position', [100, 100, 900, 650], 'Color', 'w');
 
-% Perfil de velocidad dimensional
-U_profile = U_plus_spalding * u_tau;
-
-%% Generar figuras
-fprintf('\n=== Generando figuras ===\n');
-
-% Figura 1: Ley de pared (U+ vs y+)
-figure('Position', [100, 100, 1200, 800], 'Color', 'w');
-
-% Panel principal
-semilogx(y_plus, U_plus_viscous, 'b--', 'LineWidth', 2, 'DisplayName', 'Subcapa viscosa: $U^+ = y^+$');
+plot(u_analitico, y_analitico*1000, 'k-', 'LineWidth', 2, ...
+    'DisplayName', 'Analitico (Laminar)');
 hold on;
-semilogx(y_plus(y_plus > 5), U_plus_log(y_plus > 5), 'r--', 'LineWidth', 2, ...
-    'DisplayName', sprintf('Ley logaritmica: $U^+ = \\frac{1}{%.2f}\\ln(y^+) + %.1f$', kappa, B));
-semilogx(y_plus, U_plus_spalding, 'k-', 'LineWidth', 2.5, 'DisplayName', 'Ley de Spalding (compuesta)');
+plot(u_low, y_low*1000, 'b-', 'LineWidth', 2, ...
+    'DisplayName', 'CFD: Low-Re $k$-$\varepsilon$ (LaunderSharma)');
+plot(u_high, y_high*1000, 'r--', 'LineWidth', 2, ...
+    'DisplayName', 'CFD: High-Re $k$-$\varepsilon$ (Wall Functions)');
+hold off;
 
-% Marcar regiones
-xline(5, ':', 'Color', [0.5 0.5 0.5], 'LineWidth', 1.5, 'HandleVisibility', 'off');
-xline(30, ':', 'Color', [0.5 0.5 0.5], 'LineWidth', 1.5, 'HandleVisibility', 'off');
+xlabel('Velocidad $u$ [m/s]', 'Interpreter', 'latex', 'FontSize', 14);
+ylabel('Altura $y$ [mm]', 'Interpreter', 'latex', 'FontSize', 14);
+title(['Perfiles de Velocidad - Flujo Couette ($Re_H = ', ...
+    num2str(Re_H, '%.0f'), '$)'], 'Interpreter', 'latex', 'FontSize', 16);
+legend('Location', 'southeast', 'Interpreter', 'latex', 'FontSize', 11);
+grid on;
+set(gca, 'FontSize', 12, 'TickLabelInterpreter', 'latex');
+xlim([0 U_wall*1.05]);
+ylim([0 H*1000]);
 
-% Anotaciones de regiones
-text(2, 20, 'Subcapa viscosa', 'FontSize', 10, 'Interpreter', 'latex');
-text(10, 12, 'Buffer', 'FontSize', 10, 'Interpreter', 'latex');
-text(100, 17, 'Capa logaritmica', 'FontSize', 10, 'Interpreter', 'latex');
+exportgraphics(fig1, fullfile(fig_path, 'Ej5_perfiles_velocidad.png'), 'Resolution', 300);
+fprintf('\n  Guardada: Ej5_perfiles_velocidad.png\n');
+
+%% ============= FIGURA 2: Ley de la Pared (u+ vs y+) ================
+fig2 = figure('Position', [100, 100, 1000, 700], 'Color', 'w');
+
+% Filtrar puntos validos - extender rango para High-Re que llega hasta ~5000
+mask_low = y_plus_low > 0.1 & y_plus_low < 6000;
+mask_high = y_plus_high > 0.1 & y_plus_high < 6000;
+
+% Leyes teoricas
+semilogx(y_plus_visc, u_plus_visc, 'k-', 'LineWidth', 2, ...
+    'DisplayName', 'Subcapa viscosa: $u^+ = y^+$');
+hold on;
+semilogx(y_plus_log, u_plus_log, 'k--', 'LineWidth', 2, ...
+    'DisplayName', 'Ley logaritmica: $u^+ = \frac{1}{\kappa}\ln(y^+) + B$');
+
+% Datos CFD
+semilogx(y_plus_low(mask_low), u_plus_low(mask_low), 'b.-', ...
+    'LineWidth', 1.5, 'MarkerSize', 8, 'DisplayName', 'CFD: Low-Re $k$-$\varepsilon$');
+semilogx(y_plus_high(mask_high), u_plus_high(mask_high), 'rs-', ...
+    'LineWidth', 1.5, 'MarkerSize', 10, 'MarkerFaceColor', 'r', ...
+    'DisplayName', 'CFD: High-Re $k$-$\varepsilon$ (WF)');
+
+% Lineas de referencia para zonas
+xline(5, ':', 'Color', [0.5 0.5 0.5], 'LineWidth', 1, 'HandleVisibility', 'off');
+xline(30, ':', 'Color', [0.5 0.5 0.5], 'LineWidth', 1, 'HandleVisibility', 'off');
+
+% Anotaciones de zonas
+text(1.5, 2, 'Subcapa viscosa', 'FontSize', 10, 'Interpreter', 'latex');
+text(10, 8, 'Buffer', 'FontSize', 10, 'Interpreter', 'latex');
+text(200, 15, 'Capa logaritmica', 'FontSize', 10, 'Interpreter', 'latex');
+
+hold off;
+
+xlabel('$y^+$', 'Interpreter', 'latex', 'FontSize', 16);
+ylabel('$u^+$', 'Interpreter', 'latex', 'FontSize', 16);
+title('Ley de la Pared - Flujo Couette Turbulento', ...
+    'Interpreter', 'latex', 'FontSize', 18);
+legend('Location', 'northwest', 'Interpreter', 'latex', 'FontSize', 11);
+grid on;
+set(gca, 'FontSize', 13, 'TickLabelInterpreter', 'latex');
+xlim([0.5 5000]);
+ylim([0 30]);
+
+exportgraphics(fig2, fullfile(fig_path, 'Ej5_ley_pared.png'), 'Resolution', 300);
+fprintf('  Guardada: Ej5_ley_pared.png\n');
+
+%% ============= FIGURA 3: Detalle subcapa viscosa ================
+fig3 = figure('Position', [100, 100, 900, 650], 'Color', 'w');
+
+% Ampliar el rango para mostrar mas puntos de High-Re
+% High-Re empieza en y+ ~ 74, asi que extendemos hasta 500
+mask_low_zoom = y_plus_low > 0.1 & y_plus_low < 500;
+mask_high_zoom = y_plus_high > 0.1 & y_plus_high < 500;
+
+plot(y_plus_visc(y_plus_visc < 12), u_plus_visc(y_plus_visc < 12), 'k-', ...
+    'LineWidth', 2, 'DisplayName', '$u^+ = y^+$');
+hold on;
+
+% Ley logaritmica extendida
+y_log_short = linspace(10, 500, 100);
+u_log_short = (1/kappa)*log(y_log_short) + B;
+plot(y_log_short, u_log_short, 'k--', 'LineWidth', 2, ...
+    'DisplayName', 'Ley logaritmica');
+
+plot(y_plus_low(mask_low_zoom), u_plus_low(mask_low_zoom), 'bo-', ...
+    'LineWidth', 1.5, 'MarkerSize', 5, 'MarkerFaceColor', 'b', ...
+    'DisplayName', 'Low-Re');
+plot(y_plus_high(mask_high_zoom), u_plus_high(mask_high_zoom), 'rs-', ...
+    'LineWidth', 1.5, 'MarkerSize', 8, 'MarkerFaceColor', 'r', ...
+    'DisplayName', 'High-Re (WF)');
+
+xline(5, ':', 'Color', [0.5 0.5 0.5], 'HandleVisibility', 'off');
+xline(30, ':', 'Color', [0.5 0.5 0.5], 'HandleVisibility', 'off');
+
+% Anotaciones
+text(2, 3, 'Subcapa', 'FontSize', 9, 'Interpreter', 'latex');
+text(12, 10, 'Buffer', 'FontSize', 9, 'Interpreter', 'latex');
+text(100, 16, 'Log', 'FontSize', 9, 'Interpreter', 'latex');
+
+hold off;
 
 xlabel('$y^+$', 'Interpreter', 'latex', 'FontSize', 14);
-ylabel('$U^+$', 'Interpreter', 'latex', 'FontSize', 14);
-title(sprintf('Ley de pared - Couette turbulento ($Re = %d$)', Re), ...
-    'Interpreter', 'latex', 'FontSize', 16);
-legend('Location', 'northwest', 'Interpreter', 'latex', 'FontSize', 12);
+ylabel('$u^+$', 'Interpreter', 'latex', 'FontSize', 14);
+title('Detalle de la Capa Limite (escala lineal)', 'Interpreter', 'latex', 'FontSize', 16);
+legend('Location', 'southeast', 'Interpreter', 'latex', 'FontSize', 11);
 grid on;
-xlim([1, max(y_plus)]);
-ylim([0, max(U_plus_spalding)*1.1]);
+set(gca, 'FontSize', 12, 'TickLabelInterpreter', 'latex');
+xlim([0 500]);
+ylim([0 22]);
 
-% Guardar
-exportgraphics(gcf, [output_dir, 'ley_pared_teorica.png'], 'Resolution', 300);
-fprintf('Guardada: ley_pared_teorica.png\n');
+exportgraphics(fig3, fullfile(fig_path, 'Ej5_detalle_capa_limite.png'), 'Resolution', 300);
+fprintf('  Guardada: Ej5_detalle_capa_limite.png\n');
 
-% Figura 2: Perfil de velocidad dimensional
-figure('Position', [100, 100, 1000, 800], 'Color', 'w');
+%% ============= GUARDAR RESULTADOS ================
+results.Re_H = Re_H;
+results.nu = nu;
+results.U_wall = U_wall;
+results.H = H;
+results.kappa = kappa;
+results.B = B;
 
-plot(U_profile, y_coords*1000, 'b-', 'LineWidth', 2.5, 'DisplayName', 'Perfil turbulento');
-hold on;
-plot([0, U_wall], [0, H*1000], 'r--', 'LineWidth', 2, 'DisplayName', 'Couette laminar');
+results.lowRe.y = y_low;
+results.lowRe.u = u_low;
+results.lowRe.y_plus = y_plus_low;
+results.lowRe.u_plus = u_plus_low;
+results.lowRe.tau_w = tau_w_low;
+results.lowRe.u_tau = u_tau_low;
+results.lowRe.y_plus_first = yplus_low;
 
-xlabel('$U$ [m/s]', 'Interpreter', 'latex', 'FontSize', 14);
-ylabel('$y$ [mm]', 'Interpreter', 'latex', 'FontSize', 14);
-title(sprintf('Perfil de velocidad - Couette ($Re = %d$)', Re), ...
-    'Interpreter', 'latex', 'FontSize', 16);
-legend('Location', 'northwest', 'Interpreter', 'latex', 'FontSize', 12);
-grid on;
-xlim([0, U_wall*1.1]);
-ylim([0, H*1000]);
+results.highRe.y = y_high;
+results.highRe.u = u_high;
+results.highRe.y_plus = y_plus_high;
+results.highRe.u_plus = u_plus_high;
+results.highRe.tau_w = tau_w_high;
+results.highRe.u_tau = u_tau_high;
+results.highRe.y_plus_first = yplus_high;
 
-exportgraphics(gcf, [output_dir, 'perfil_velocidad_dimensional.png'], 'Resolution', 300);
-fprintf('Guardada: perfil_velocidad_dimensional.png\n');
+save(fullfile(fig_path, 'resultados_ejercicio5.mat'), 'results');
+fprintf('\nResultados guardados en: resultados_ejercicio5.mat\n');
 
-% Figura 3: Comparacion Low-Re vs High-Re (teorico)
-figure('Position', [100, 100, 1200, 500], 'Color', 'w');
+%% ============= RESUMEN ================
+fprintf('\n============================================\n');
+fprintf(' RESUMEN DEL EJERCICIO 5\n');
+fprintf('============================================\n');
+fprintf(' Modelo Low-Re (LaunderSharmaKE):\n');
+fprintf('   - tau_w = %.4f Pa\n', tau_w_low);
+fprintf('   - u_tau = %.4f m/s\n', u_tau_low);
+fprintf('   - y+ primera celda = %.2f (objetivo: ~1)\n', yplus_low);
+fprintf('\n Modelo High-Re (kEpsilon + WF):\n');
+fprintf('   - tau_w = %.4f Pa\n', tau_w_high);
+fprintf('   - u_tau = %.4f m/s\n', u_tau_high);
+fprintf('   - y+ primera celda = %.2f (objetivo: 30-300)\n', yplus_high);
+fprintf('============================================\n');
 
-% Para Low-Re, la malla debe resolver hasta y+ ~ 1
-% Para High-Re, se usan wall functions y y+ ~ 30-300
+%% ============= FUNCIONES AUXILIARES ================
 
-subplot(1, 2, 1);
-% Estimacion de y+ de primera celda para diferentes estrategias
-y1_lowRe = 1e-5;  % Primera celda Low-Re
-y1_highRe = 1e-3; % Primera celda High-Re
+function [y, u] = read_profile(case_path, time_str)
+    % Lee perfil de velocidad desde graphUniform
+    filename = fullfile(case_path, 'postProcessing', 'graphUniform', time_str, 'line.xy');
+    
+    if ~exist(filename, 'file')
+        error('Archivo no encontrado: %s', filename);
+    end
+    
+    data = readmatrix(filename, 'FileType', 'text');
+    y = data(:, 2);  % columna Y
+    u = data(:, 4);  % columna Ux
+end
 
-y_plus_lowRe = y1_lowRe * u_tau / nu;
-y_plus_highRe = y1_highRe * u_tau / nu;
+function [y, u] = read_profile_cellcentre(case_path, time_str)
+    % Lee perfil de velocidad desde centros de celda (Ccy y U)
+    % Esto da los valores REALES en los centros de celda, no interpolados
+    
+    ccy_file = fullfile(case_path, time_str, 'Ccy');
+    ccx_file = fullfile(case_path, time_str, 'Ccx');
+    u_file = fullfile(case_path, time_str, 'U');
+    
+    if ~exist(ccy_file, 'file')
+        warning('Ccy no encontrado, usando graphUniform');
+        [y, u] = read_profile(case_path, time_str);
+        return;
+    end
+    
+    % Leer coordenadas de centros de celda
+    ccy = read_OF_field(ccy_file);
+    ccx = read_OF_field(ccx_file);
+    
+    % Leer campo U
+    U = read_OF_vector(u_file);
+    
+    % Si no hay datos, devolver vacio
+    if isempty(ccy) || isempty(ccx) || isempty(U)
+        warning('No se pudieron leer los campos, usando graphUniform');
+        [y, u] = read_profile(case_path, time_str);
+        return;
+    end
+    
+    % Filtrar para x ~ 0.05 (centro del dominio)
+    % Tolerancia pequena para obtener solo una columna de celdas
+    x_target = 0.049;  % valor exacto que existe en la malla
+    tol = 0.0005;
+    mask = abs(ccx - x_target) < tol;
+    
+    % Si no hay puntos, aumentar tolerancia
+    if sum(mask) == 0
+        tol = 0.003;
+        mask = abs(ccx - x_target) < tol;
+    end
+    
+    y_raw = ccy(mask);
+    u_raw = U(mask, 1);  % componente x
+    
+    % Ordenar por y y eliminar duplicados
+    [y, idx] = sort(y_raw);
+    u = u_raw(idx);
+    
+    % Eliminar duplicados (mismo y)
+    [y, unique_idx] = unique(y);
+    u = u(unique_idx);
+end
 
-bar_data = [y_plus_lowRe; y_plus_highRe];
-b = bar(bar_data, 'FaceColor', 'flat');
-b.CData(1,:) = [0.2 0.6 0.9];
-b.CData(2,:) = [0.9 0.4 0.2];
-set(gca, 'XTickLabel', {'Low-Re', 'High-Re'});
-ylabel('$y^+$ de primera celda', 'Interpreter', 'latex', 'FontSize', 12);
-title('Requisitos de malla', 'Interpreter', 'latex', 'FontSize', 14);
-yline(1, 'g--', 'LineWidth', 2, 'Label', '$y^+ = 1$', 'Interpreter', 'latex');
-yline(30, 'r--', 'LineWidth', 2, 'Label', '$y^+ = 30$', 'Interpreter', 'latex');
-grid on;
+function data = read_OF_field(filename)
+    % Lee un campo escalar de OpenFOAM (formato nonuniform List<scalar>)
+    % Enfoque simple: leer linea por linea
+    
+    fid = fopen(filename, 'r');
+    if fid < 0
+        warning('No se pudo abrir %s', filename);
+        data = [];
+        return;
+    end
+    
+    % Buscar la linea con "internalField"
+    found = false;
+    n = 0;
+    while ~feof(fid)
+        line = fgetl(fid);
+        if contains(line, 'internalField') && contains(line, 'List<scalar>')
+            % La siguiente linea tiene el numero de elementos
+            n_line = fgetl(fid);
+            n = str2double(strtrim(n_line));
+            % La siguiente linea es "("
+            fgetl(fid);  
+            found = true;
+            break;
+        end
+    end
+    
+    if ~found || n == 0
+        fclose(fid);
+        warning('No se encontro internalField en %s', filename);
+        data = [];
+        return;
+    end
+    
+    % Leer n valores
+    data = zeros(n, 1);
+    for i = 1:n
+        line = fgetl(fid);
+        data(i) = str2double(strtrim(line));
+    end
+    
+    fclose(fid);
+end
 
-subplot(1, 2, 2);
-% Numero de celdas requeridas
-n_lowRe = 500;   % Muchas celdas para resolver subcapa
-n_highRe = 50;   % Menos celdas con wall functions
+function U = read_OF_vector(filename)
+    % Lee un campo vectorial de OpenFOAM (formato nonuniform List<vector>)
+    fid = fopen(filename, 'r');
+    content = fread(fid, '*char')';
+    fclose(fid);
+    
+    % Buscar "nonuniform List<vector>" seguido del numero de elementos
+    match = regexp(content, 'nonuniform\s+List<vector>\s*\n(\d+)\s*\n\(', 'tokens');
+    if isempty(match)
+        match = regexp(content, 'List<vector>\s*\n(\d+)\s*\n\(', 'tokens');
+    end
+    if isempty(match)
+        error('Formato no reconocido en %s', filename);
+    end
+    
+    n = str2double(match{1}{1});
+    
+    % Extraer todos los vectores con formato (x y z)
+    % El patron captura numeros en notacion cientifica
+    pattern = '\(([0-9.eE+-]+)\s+([0-9.eE+-]+)\s+([0-9.eE+-]+)\)';
+    tokens = regexp(content, pattern, 'tokens');
+    
+    % Tomar solo los primeros n (internalField)
+    U = zeros(n, 3);
+    for i = 1:min(n, length(tokens))
+        U(i,1) = str2double(tokens{i}{1});
+        U(i,2) = str2double(tokens{i}{2});
+        U(i,3) = str2double(tokens{i}{3});
+    end
+end
 
-bar_data2 = [n_lowRe; n_highRe];
-b2 = bar(bar_data2, 'FaceColor', 'flat');
-b2.CData(1,:) = [0.2 0.6 0.9];
-b2.CData(2,:) = [0.9 0.4 0.2];
-set(gca, 'XTickLabel', {'Low-Re', 'High-Re'});
-ylabel('Celdas en direcci\''on $y$', 'Interpreter', 'latex', 'FontSize', 12);
-title('Coste computacional', 'Interpreter', 'latex', 'FontSize', 14);
-grid on;
+function tau_rho = read_tau_wall(case_path, time_str, patch_name)
+    % Lee wallShearStress y devuelve el promedio de |tau_x|/rho
+    filename = fullfile(case_path, time_str, 'wallShearStress');
+    
+    if ~exist(filename, 'file')
+        warning('wallShearStress no encontrado');
+        tau_rho = 0.1;
+        return;
+    end
+    
+    fid = fopen(filename, 'r');
+    content = fread(fid, '*char')';
+    fclose(fid);
+    
+    % Buscar el patch
+    pattern = [patch_name '\s*\{[^}]*List<vector>\s*(\d+)\s*\(([^)]+)\)'];
+    tokens = regexp(content, pattern, 'tokens');
+    
+    if isempty(tokens)
+        warning('Patch %s no encontrado', patch_name);
+        tau_rho = 0.1;
+        return;
+    end
+    
+    % Extraer valores del vector (solo componente x)
+    vec_str = tokens{1}{2};
+    % Formato: (x y z) (x y z) ...
+    pattern_x = '\(([0-9.e+-]+)';
+    vals = regexp(vec_str, pattern_x, 'tokens');
+    
+    tau_x = zeros(length(vals), 1);
+    for i = 1:length(vals)
+        tau_x(i) = str2double(vals{i}{1});
+    end
+    
+    tau_rho = mean(abs(tau_x));
+end
 
-sgtitle(sprintf('Estrategias de modelado de pared ($Re = %d$)', Re), ...
-    'Interpreter', 'latex', 'FontSize', 16);
-
-exportgraphics(gcf, [output_dir, 'comparacion_estrategias.png'], 'Resolution', 300);
-fprintf('Guardada: comparacion_estrategias.png\n');
-
-% Figura 4: Estimacion de y+ y tau_w
-figure('Position', [100, 100, 1000, 600], 'Color', 'w');
-
-% Panel izquierdo: y+ a lo largo del perfil
-subplot(1, 2, 1);
-semilogy(y_coords*1000, y_plus, 'b-', 'LineWidth', 2);
-xlabel('$y$ [mm]', 'Interpreter', 'latex', 'FontSize', 12);
-ylabel('$y^+$', 'Interpreter', 'latex', 'FontSize', 12);
-title('Coordenada de pared $y^+$', 'Interpreter', 'latex', 'FontSize', 14);
-yline(1, 'g--', 'LineWidth', 1.5, 'Label', '$y^+ = 1$', 'Interpreter', 'latex');
-yline(5, 'k--', 'LineWidth', 1.5, 'Label', '$y^+ = 5$', 'Interpreter', 'latex');
-yline(30, 'r--', 'LineWidth', 1.5, 'Label', '$y^+ = 30$', 'Interpreter', 'latex');
-grid on;
-
-% Panel derecho: Resumen de parametros
-subplot(1, 2, 2);
-axis off;
-text(0.1, 0.9, '\textbf{Par\''ametros del problema}', 'Interpreter', 'latex', 'FontSize', 14);
-text(0.1, 0.8, sprintf('$Re = %d$', Re), 'Interpreter', 'latex', 'FontSize', 12);
-text(0.1, 0.7, sprintf('$H = %.2f$ m', H), 'Interpreter', 'latex', 'FontSize', 12);
-text(0.1, 0.6, sprintf('$U_{wall} = %.1f$ m/s', U_wall), 'Interpreter', 'latex', 'FontSize', 12);
-text(0.1, 0.5, sprintf('$\\nu = %.3e$ m$^2$/s', nu), 'Interpreter', 'latex', 'FontSize', 12);
-text(0.1, 0.35, '\textbf{Resultados estimados}', 'Interpreter', 'latex', 'FontSize', 14);
-text(0.1, 0.25, sprintf('$C_f = %.5f$', Cf), 'Interpreter', 'latex', 'FontSize', 12);
-text(0.1, 0.15, sprintf('$\\tau_w = %.4f$ Pa', tau_w), 'Interpreter', 'latex', 'FontSize', 12);
-text(0.1, 0.05, sprintf('$u_\\tau = %.4f$ m/s', u_tau), 'Interpreter', 'latex', 'FontSize', 12);
-
-exportgraphics(gcf, [output_dir, 'parametros_pared.png'], 'Resolution', 300);
-fprintf('Guardada: parametros_pared.png\n');
-
-%% Guardar datos
-save([output_dir, 'resultados_ejercicio5.mat'], ...
-    'Re', 'H', 'U_wall', 'nu', 'u_tau', 'tau_w', 'Cf', ...
-    'y_coords', 'y_plus', 'U_plus_spalding', 'U_profile', ...
-    'kappa', 'B');
-fprintf('\nGuardado: resultados_ejercicio5.mat\n');
-
-%% Resumen
-fprintf('\n=== RESUMEN EJERCICIO 5 ===\n');
-fprintf('Re = %d\n', Re);
-fprintf('u_tau estimado = %.4f m/s\n', u_tau);
-fprintf('tau_w estimado = %.4f Pa\n', tau_w);
-fprintf('y+ primera celda (Low-Re) ~ %.2f\n', y_plus(1));
-fprintf('y+ maximo ~ %.1f\n', max(y_plus));
-fprintf('\nFiguras guardadas en: %s\n', output_dir);
+function yplus = read_yplus(case_path, time_str, patch_name)
+    % Lee yPlus promedio del patch especificado
+    filename = fullfile(case_path, time_str, 'yPlus');
+    
+    if ~exist(filename, 'file')
+        warning('yPlus no encontrado');
+        yplus = 1;
+        return;
+    end
+    
+    fid = fopen(filename, 'r');
+    content = fread(fid, '*char')';
+    fclose(fid);
+    
+    % Buscar el patch
+    pattern = [patch_name '\s*\{[^}]*List<scalar>\s*\d+\s*\(([^)]+)\)'];
+    tokens = regexp(content, pattern, 'tokens');
+    
+    if isempty(tokens)
+        % Intentar formato uniform
+        pattern2 = [patch_name '\s*\{[^}]*value\s+uniform\s+([0-9.e+-]+)'];
+        tokens = regexp(content, pattern2, 'tokens');
+        if ~isempty(tokens)
+            yplus = str2double(tokens{1}{1});
+            return;
+        end
+        warning('Patch %s no encontrado en yPlus', patch_name);
+        yplus = 1;
+        return;
+    end
+    
+    vals = str2num(tokens{1}{1});
+    yplus = mean(vals);
+end

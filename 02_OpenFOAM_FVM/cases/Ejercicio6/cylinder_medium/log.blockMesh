@@ -1,0 +1,244 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+Build  : 13-cde978a97c93
+Exec   : blockMesh
+Date   : Jan 01 2026
+Time   : 11:58:33
+Host   : "f419b43b1d4e"
+PID    : 207
+I/O    : uncollated
+Case   : /home/openfoam/work
+nProcs : 1
+sigFpe : Floating point exception trapping - not supported on this platform
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 10)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Expanding #calc at line 25 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Creating new library in "dynamicCode/_f027a00cf43b8f64c9175dbb69b06b1575a50da9/platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_f027a00cf43b8f64c9175dbb69b06b1575a50da9.so"
+"/opt/openfoam13/etc/codeTemplates/dynamicCode/codeStreamTemplate.C" "/home/openfoam/work/dynamicCode/_f027a00cf43b8f64c9175dbb69b06b1575a50da9/codeStreamTemplate.C"
+Invoking "wmake -s libso /home/openfoam/work/dynamicCode/_f027a00cf43b8f64c9175dbb69b06b1575a50da9"
+wmake libso /home/openfoam/work/dynamicCode/_f027a00cf43b8f64c9175dbb69b06b1575a50da9
+    ln: ./lnInclude
+    wmkdep: codeStreamTemplate.C
+    Ctoo: codeStreamTemplate.C
+    ld: /home/openfoam/work/dynamicCode/_f027a00cf43b8f64c9175dbb69b06b1575a50da9/../platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_f027a00cf43b8f64c9175dbb69b06b1575a50da9.so
+Expanding #calc at line 29 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Creating new library in "dynamicCode/_f542c52af0b2ea28cb19c1932be77519fee8fa13/platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_f542c52af0b2ea28cb19c1932be77519fee8fa13.so"
+"/opt/openfoam13/etc/codeTemplates/dynamicCode/codeStreamTemplate.C" "/home/openfoam/work/dynamicCode/_f542c52af0b2ea28cb19c1932be77519fee8fa13/codeStreamTemplate.C"
+Invoking "wmake -s libso /home/openfoam/work/dynamicCode/_f542c52af0b2ea28cb19c1932be77519fee8fa13"
+wmake libso /home/openfoam/work/dynamicCode/_f542c52af0b2ea28cb19c1932be77519fee8fa13
+    ln: ./lnInclude
+    wmkdep: codeStreamTemplate.C
+    Ctoo: codeStreamTemplate.C
+    ld: /home/openfoam/work/dynamicCode/_f542c52af0b2ea28cb19c1932be77519fee8fa13/../platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_f542c52af0b2ea28cb19c1932be77519fee8fa13.so
+Expanding #calc at line 32 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Creating new library in "dynamicCode/_43e4758d5b4c507783852fee5cc64769b8006f8d/platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_43e4758d5b4c507783852fee5cc64769b8006f8d.so"
+"/opt/openfoam13/etc/codeTemplates/dynamicCode/codeStreamTemplate.C" "/home/openfoam/work/dynamicCode/_43e4758d5b4c507783852fee5cc64769b8006f8d/codeStreamTemplate.C"
+Invoking "wmake -s libso /home/openfoam/work/dynamicCode/_43e4758d5b4c507783852fee5cc64769b8006f8d"
+wmake libso /home/openfoam/work/dynamicCode/_43e4758d5b4c507783852fee5cc64769b8006f8d
+    ln: ./lnInclude
+    wmkdep: codeStreamTemplate.C
+    Ctoo: codeStreamTemplate.C
+    ld: /home/openfoam/work/dynamicCode/_43e4758d5b4c507783852fee5cc64769b8006f8d/../platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_43e4758d5b4c507783852fee5cc64769b8006f8d.so
+Expanding #calc at line 35 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Creating new library in "dynamicCode/_ccba2136f7b6560c7609bfda1d8cebbec12d9c7f/platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_ccba2136f7b6560c7609bfda1d8cebbec12d9c7f.so"
+"/opt/openfoam13/etc/codeTemplates/dynamicCode/codeStreamTemplate.C" "/home/openfoam/work/dynamicCode/_ccba2136f7b6560c7609bfda1d8cebbec12d9c7f/codeStreamTemplate.C"
+Invoking "wmake -s libso /home/openfoam/work/dynamicCode/_ccba2136f7b6560c7609bfda1d8cebbec12d9c7f"
+wmake libso /home/openfoam/work/dynamicCode/_ccba2136f7b6560c7609bfda1d8cebbec12d9c7f
+    ln: ./lnInclude
+    wmkdep: codeStreamTemplate.C
+    Ctoo: codeStreamTemplate.C
+    ld: /home/openfoam/work/dynamicCode/_ccba2136f7b6560c7609bfda1d8cebbec12d9c7f/../platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_ccba2136f7b6560c7609bfda1d8cebbec12d9c7f.so
+Expanding #calc at line 36 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Creating new library in "dynamicCode/_fbfe3bfbb5d69c034c7dc51ef90a84f7468f7056/platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_fbfe3bfbb5d69c034c7dc51ef90a84f7468f7056.so"
+"/opt/openfoam13/etc/codeTemplates/dynamicCode/codeStreamTemplate.C" "/home/openfoam/work/dynamicCode/_fbfe3bfbb5d69c034c7dc51ef90a84f7468f7056/codeStreamTemplate.C"
+Invoking "wmake -s libso /home/openfoam/work/dynamicCode/_fbfe3bfbb5d69c034c7dc51ef90a84f7468f7056"
+wmake libso /home/openfoam/work/dynamicCode/_fbfe3bfbb5d69c034c7dc51ef90a84f7468f7056
+    ln: ./lnInclude
+    wmkdep: codeStreamTemplate.C
+    Ctoo: codeStreamTemplate.C
+    ld: /home/openfoam/work/dynamicCode/_fbfe3bfbb5d69c034c7dc51ef90a84f7468f7056/../platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_fbfe3bfbb5d69c034c7dc51ef90a84f7468f7056.so
+Expanding #calc at line 42 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Creating new library in "dynamicCode/_1468c45fe11c9da1d3b26ab45c75ed3c0c289cbf/platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_1468c45fe11c9da1d3b26ab45c75ed3c0c289cbf.so"
+"/opt/openfoam13/etc/codeTemplates/dynamicCode/codeStreamTemplate.C" "/home/openfoam/work/dynamicCode/_1468c45fe11c9da1d3b26ab45c75ed3c0c289cbf/codeStreamTemplate.C"
+Invoking "wmake -s libso /home/openfoam/work/dynamicCode/_1468c45fe11c9da1d3b26ab45c75ed3c0c289cbf"
+wmake libso /home/openfoam/work/dynamicCode/_1468c45fe11c9da1d3b26ab45c75ed3c0c289cbf
+    ln: ./lnInclude
+    wmkdep: codeStreamTemplate.C
+    Ctoo: codeStreamTemplate.C
+    ld: /home/openfoam/work/dynamicCode/_1468c45fe11c9da1d3b26ab45c75ed3c0c289cbf/../platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_1468c45fe11c9da1d3b26ab45c75ed3c0c289cbf.so
+Expanding #calc at line 82 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Creating new library in "dynamicCode/_fafd230643a4e3720a46bb5d075ea498de35fe8c/platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_fafd230643a4e3720a46bb5d075ea498de35fe8c.so"
+"/opt/openfoam13/etc/codeTemplates/dynamicCode/codeStreamTemplate.C" "/home/openfoam/work/dynamicCode/_fafd230643a4e3720a46bb5d075ea498de35fe8c/codeStreamTemplate.C"
+Invoking "wmake -s libso /home/openfoam/work/dynamicCode/_fafd230643a4e3720a46bb5d075ea498de35fe8c"
+wmake libso /home/openfoam/work/dynamicCode/_fafd230643a4e3720a46bb5d075ea498de35fe8c
+    ln: ./lnInclude
+    wmkdep: codeStreamTemplate.C
+    Ctoo: codeStreamTemplate.C
+    ld: /home/openfoam/work/dynamicCode/_fafd230643a4e3720a46bb5d075ea498de35fe8c/../platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_fafd230643a4e3720a46bb5d075ea498de35fe8c.so
+Expanding #calc at line 83 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Creating new library in "dynamicCode/_a131061b3375202f0a84d508ce4c60e00ea83faf/platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_a131061b3375202f0a84d508ce4c60e00ea83faf.so"
+"/opt/openfoam13/etc/codeTemplates/dynamicCode/codeStreamTemplate.C" "/home/openfoam/work/dynamicCode/_a131061b3375202f0a84d508ce4c60e00ea83faf/codeStreamTemplate.C"
+Invoking "wmake -s libso /home/openfoam/work/dynamicCode/_a131061b3375202f0a84d508ce4c60e00ea83faf"
+wmake libso /home/openfoam/work/dynamicCode/_a131061b3375202f0a84d508ce4c60e00ea83faf
+    ln: ./lnInclude
+    wmkdep: codeStreamTemplate.C
+    Ctoo: codeStreamTemplate.C
+    ld: /home/openfoam/work/dynamicCode/_a131061b3375202f0a84d508ce4c60e00ea83faf/../platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_a131061b3375202f0a84d508ce4c60e00ea83faf.so
+Expanding #calc at line 84 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Creating new library in "dynamicCode/_abfa0e374d753026b52442104a677bfdd13742f4/platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_abfa0e374d753026b52442104a677bfdd13742f4.so"
+"/opt/openfoam13/etc/codeTemplates/dynamicCode/codeStreamTemplate.C" "/home/openfoam/work/dynamicCode/_abfa0e374d753026b52442104a677bfdd13742f4/codeStreamTemplate.C"
+Invoking "wmake -s libso /home/openfoam/work/dynamicCode/_abfa0e374d753026b52442104a677bfdd13742f4"
+wmake libso /home/openfoam/work/dynamicCode/_abfa0e374d753026b52442104a677bfdd13742f4
+    ln: ./lnInclude
+    wmkdep: codeStreamTemplate.C
+    Ctoo: codeStreamTemplate.C
+    ld: /home/openfoam/work/dynamicCode/_abfa0e374d753026b52442104a677bfdd13742f4/../platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_abfa0e374d753026b52442104a677bfdd13742f4.so
+Expanding #calc at line 86 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Creating new library in "dynamicCode/_b5a4b66399465b976832d240d7d34f59c5f47d2f/platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_b5a4b66399465b976832d240d7d34f59c5f47d2f.so"
+"/opt/openfoam13/etc/codeTemplates/dynamicCode/codeStreamTemplate.C" "/home/openfoam/work/dynamicCode/_b5a4b66399465b976832d240d7d34f59c5f47d2f/codeStreamTemplate.C"
+Invoking "wmake -s libso /home/openfoam/work/dynamicCode/_b5a4b66399465b976832d240d7d34f59c5f47d2f"
+wmake libso /home/openfoam/work/dynamicCode/_b5a4b66399465b976832d240d7d34f59c5f47d2f
+    ln: ./lnInclude
+    wmkdep: codeStreamTemplate.C
+    Ctoo: codeStreamTemplate.C
+    ld: /home/openfoam/work/dynamicCode/_b5a4b66399465b976832d240d7d34f59c5f47d2f/../platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_b5a4b66399465b976832d240d7d34f59c5f47d2f.so
+Expanding #calc at line 88 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Creating new library in "dynamicCode/_6f798369793b0b2ca6ca9a8ca5cd9c5d29ce362c/platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_6f798369793b0b2ca6ca9a8ca5cd9c5d29ce362c.so"
+"/opt/openfoam13/etc/codeTemplates/dynamicCode/codeStreamTemplate.C" "/home/openfoam/work/dynamicCode/_6f798369793b0b2ca6ca9a8ca5cd9c5d29ce362c/codeStreamTemplate.C"
+Invoking "wmake -s libso /home/openfoam/work/dynamicCode/_6f798369793b0b2ca6ca9a8ca5cd9c5d29ce362c"
+wmake libso /home/openfoam/work/dynamicCode/_6f798369793b0b2ca6ca9a8ca5cd9c5d29ce362c
+    ln: ./lnInclude
+    wmkdep: codeStreamTemplate.C
+    Ctoo: codeStreamTemplate.C
+    ld: /home/openfoam/work/dynamicCode/_6f798369793b0b2ca6ca9a8ca5cd9c5d29ce362c/../platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_6f798369793b0b2ca6ca9a8ca5cd9c5d29ce362c.so
+Expanding #calc at line 89 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Expanding #calc at line 116 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Creating new library in "dynamicCode/_b76321560e2ed43561906c80c82067b67f860a1a/platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_b76321560e2ed43561906c80c82067b67f860a1a.so"
+"/opt/openfoam13/etc/codeTemplates/dynamicCode/codeStreamTemplate.C" "/home/openfoam/work/dynamicCode/_b76321560e2ed43561906c80c82067b67f860a1a/codeStreamTemplate.C"
+Invoking "wmake -s libso /home/openfoam/work/dynamicCode/_b76321560e2ed43561906c80c82067b67f860a1a"
+wmake libso /home/openfoam/work/dynamicCode/_b76321560e2ed43561906c80c82067b67f860a1a
+    ln: ./lnInclude
+    wmkdep: codeStreamTemplate.C
+    Ctoo: codeStreamTemplate.C
+    ld: /home/openfoam/work/dynamicCode/_b76321560e2ed43561906c80c82067b67f860a1a/../platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_b76321560e2ed43561906c80c82067b67f860a1a.so
+Expanding #calc at line 117 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Creating new library in "dynamicCode/_dab03e35a8c1ca8c187a1a58387f46088cecf9bb/platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_dab03e35a8c1ca8c187a1a58387f46088cecf9bb.so"
+"/opt/openfoam13/etc/codeTemplates/dynamicCode/codeStreamTemplate.C" "/home/openfoam/work/dynamicCode/_dab03e35a8c1ca8c187a1a58387f46088cecf9bb/codeStreamTemplate.C"
+Invoking "wmake -s libso /home/openfoam/work/dynamicCode/_dab03e35a8c1ca8c187a1a58387f46088cecf9bb"
+wmake libso /home/openfoam/work/dynamicCode/_dab03e35a8c1ca8c187a1a58387f46088cecf9bb
+    ln: ./lnInclude
+    wmkdep: codeStreamTemplate.C
+    Ctoo: codeStreamTemplate.C
+    ld: /home/openfoam/work/dynamicCode/_dab03e35a8c1ca8c187a1a58387f46088cecf9bb/../platforms/linuxArm64GccDPInt32Opt/lib/libcodeStream_dab03e35a8c1ca8c187a1a58387f46088cecf9bb.so
+Expanding #calc at line 25 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Expanding #calc at line 29 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Expanding #calc at line 32 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Expanding #calc at line 35 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Expanding #calc at line 36 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Expanding #calc at line 42 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Expanding #calc at line 82 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Expanding #calc at line 83 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Expanding #calc at line 84 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Expanding #calc at line 86 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Expanding #calc at line 88 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Expanding #calc at line 89 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Expanding #calc at line 116 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Expanding #calc at line 117 in file "/home/openfoam/work/system/../system/blockMeshDict"
+Deleting polyMesh directory
+    "/home/openfoam/work/constant/polyMesh"
+Reading "blockMeshDict"
+
+Creating block mesh from
+    "system/blockMeshDict"
+Expanding #calc at line 25 in file "/home/openfoam/work/system/blockMeshDict"
+Expanding #calc at line 29 in file "/home/openfoam/work/system/blockMeshDict"
+Expanding #calc at line 32 in file "/home/openfoam/work/system/blockMeshDict"
+Expanding #calc at line 35 in file "/home/openfoam/work/system/blockMeshDict"
+Expanding #calc at line 36 in file "/home/openfoam/work/system/blockMeshDict"
+Expanding #calc at line 42 in file "/home/openfoam/work/system/blockMeshDict"
+Expanding #calc at line 82 in file "/home/openfoam/work/system/blockMeshDict"
+Expanding #calc at line 83 in file "/home/openfoam/work/system/blockMeshDict"
+Expanding #calc at line 84 in file "/home/openfoam/work/system/blockMeshDict"
+Expanding #calc at line 86 in file "/home/openfoam/work/system/blockMeshDict"
+Expanding #calc at line 88 in file "/home/openfoam/work/system/blockMeshDict"
+Expanding #calc at line 89 in file "/home/openfoam/work/system/blockMeshDict"
+Expanding #calc at line 116 in file "/home/openfoam/work/system/blockMeshDict"
+Expanding #calc at line 117 in file "/home/openfoam/work/system/blockMeshDict"
+Creating block edges
+No non-planar block faces defined
+Creating topology blocks
+Creating topology patches
+
+Creating block mesh topology
+
+Basic statistics
+    Number of internal faces : 8
+    Number of boundary faces : 26
+    Number of defined boundary faces : 26
+    Number of undefined boundary faces : 0
+
+Checking topology
+Creating block offsets
+Creating merge list .
+
+Creating polyMesh from blockMesh
+Creating points with scale 1
+    Block 0 cell size :
+        i : 0.00084561996 .. 0.84561996
+        j : 0.033928364 .. 0.067817661 0.033985745 .. 0.067932357 0.033928364 .. 0.067817661 0.033985745 .. 0.067932357 
+        k : 1
+    Block 1 cell size :
+        i : 0.00084561996 .. 0.84561996
+        j : 0.071339183 0.071459835 .. 0.071459835 0.071339183 0.071459835 .. 0.071459835 
+        k : 1
+    Block 2 cell size :
+        i : 0.94760816 .. 2.4637812 0.94187626 .. 2.4783011 0.94760816 .. 2.4637812 0.94187626 .. 2.4783011 
+        j : 0.27142691 .. 0.54254129 0.30466606 .. 0.5395306 0.27142691 .. 0.54254129 0.30466606 .. 0.5395306 
+        k : 1
+    Block 3 cell size :
+        i : 2.7876628 .. 16.725977
+        j : 0.64810841 .. 1.2962168
+        k : 1
+    Block 4 cell size :
+        i : 1.0515923 .. 52.579613
+        j : 0.57071347 0.72075293 .. 0.72075293 0.57071347 0.72075293 .. 0.72075293 
+        k : 1
+    Block 5 cell size :
+        i : 1.3638209 .. 3.5453016 1.3586682 .. 3.5386282 1.3638209 .. 3.5453016 1.3586682 .. 3.5386282 
+        j : 1.0515923 .. 52.579613 1.0417493 .. 52.087466 1.0515923 .. 52.579613 1.0417493 .. 52.087466 
+        k : 1
+    Block 6 cell size :
+        i : 2.7876628 .. 16.725977
+        j : 0.93109732 .. 46.554866
+        k : 1
+Creating cells
+Creating patches
+
+Writing polyMesh
+----------------
+Mesh Information
+----------------
+  boundingBox: (-100 -4.0103063e-15 -0.5) (100 100 0.5)
+  nPoints: 2576
+  nCells: 1208
+  nFaces: 4911
+  nInternalFaces: 2337
+----------------
+Patches
+----------------
+  patch 0 (start: 2337 size: 31) name: inlet
+  patch 1 (start: 2368 size: 22) name: outlet
+  patch 2 (start: 2390 size: 27) name: cylinder
+  patch 3 (start: 2417 size: 2494) name: frontAndBack
+
+End
+

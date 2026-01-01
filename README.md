@@ -14,7 +14,7 @@
 
 ![Von Kármán Vortex Street](02_OpenFOAM_FVM/figures/Ejercicio7/von_karman_estela.gif)
 
-This repository contains the implementation of 7 CFD (Computational Fluid Dynamics) exercises as part of a Master's level aerospace engineering class at Universidad de León. The work includes MATLAB scripts for analytical methods and OpenFOAM cases for numerical simulations.
+This repository contains the implementation of 7 CFD (Computational Fluid Dynamics) exercises as part of a Master's Aerospace Engineering class at Universidad de León. The work includes MATLAB scripts for analytical methods and OpenFOAM cases for numerical simulations.
 
 ## Project Structure
 
@@ -42,14 +42,9 @@ This repository contains the implementation of 7 CFD (Computational Fluid Dynami
 
 ## Docker Setup
 
-This project uses Docker for maximum reproducibility of OpenFOAM simulations. The complete environment is saved as a Docker image tar file.
+This project uses Docker to run OpenFOAM simulations. The complete environment is saved as a Docker image tar file.
 
-### Environment Details
 
-- **Base Image**: microfluidica/openfoam:13 (ARM64 for Mac M1)
-- **Size**: ~465 MB (compressed)
-- **OpenFOAM Version**: 13
-- **Architecture**: ARM64 (Apple Silicon compatible)
 
 ## Software and Hardware used
 

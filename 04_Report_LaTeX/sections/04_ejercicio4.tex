@@ -15,7 +15,7 @@ Este capítulo aborda el estudio de los esquemas numéricos desde dos perspectiv
 
 \begin{itemize}
     \item \textbf{Sección~\ref{sec:fvm_matlab}:} Implementación del método de volúmenes finitos en MATLAB para resolver la ecuación de convección-difusión unidimensional, verificando los resultados con la solución analítica exacta.
-    \item \textbf{Sección~\ref{sec:shocktube}:} Simulación del tubo de choque de Sod en OpenFOAM, comparando esquemas de bajo orden (\textit{upwind}) y alto orden (\textit{linearUpwind}) para evaluar su capacidad de captura de discontinuidades.
+    \item \textbf{Sección~\ref{sec:shocktube}:} Simulación del tubo de choque de Sod en OpenFOAM, comparando esquemas temporales de primer orden (Euler) y segundo orden (backward) para evaluar su impacto en la propagación de discontinuidades.
 \end{itemize}
 
 %========================================
@@ -197,12 +197,12 @@ La Fig.~\ref{fig:fvm_resumen} presenta un resumen comparativo de los tres casos 
 \subsection{Objetivo}
 %========================================
 
-El objetivo de esta sección es analizar el efecto de los esquemas de discretización espacial en flujos compresibles mediante la simulación del problema del tubo de choque de Sod en OpenFOAM, respondiendo a las siguientes cuestiones:
+El objetivo de esta sección es analizar el efecto de los esquemas de discretización temporal en flujos compresibles mediante la simulación del problema del tubo de choque de Sod en OpenFOAM, respondiendo a las siguientes cuestiones:
 
 \begin{enumerate}
-    \item Simular el problema con esquemas de alto orden espacial y validar con la solución analítica.
-    \item Explicar las fórmulas matemáticas de los esquemas upwind y linearUpwind, con sus ventajas e inconvenientes.
-    \item Comparar los resultados de alto y bajo orden espacial mediante perfiles horizontales.
+    \item Simular el problema con esquemas de alto y bajo orden temporal, validando con la solución analítica.
+    \item Explicar las características de los esquemas Euler (primer orden) y backward (segundo orden), con sus ventajas e inconvenientes.
+    \item Comparar los resultados mediante perfiles de densidad, presión y velocidad.
 \end{enumerate}
 
 %========================================
@@ -358,9 +358,9 @@ Derecha ($x > 0$) & 0.125 & 10\,000 & 0 \\
 
 \subsubsection{Configuración de esquemas}
 
-La diferencia fundamental entre los dos casos simulados radica en el esquema de discretización espacial, manteniendo el esquema temporal.
+La diferencia fundamental entre los dos casos simulados radica en el esquema de discretización temporal, mientras que los esquemas espaciales permanecen idénticos. Esto permite aislar el efecto del orden temporal sobre la precisión y estabilidad de la solución.
 
-\textbf{Caso bajo orden (upwind):}
+\textbf{Caso bajo orden (Euler temporal):}
 \begin{lstlisting}[language=C++,basicstyle=\small\ttfamily]
 ddtSchemes
 {
@@ -369,31 +369,31 @@ ddtSchemes
 divSchemes
 {
     div(phi,U)   Gauss upwind;
-    div(phid,p)  Gauss upwind;
-    div(phi,e)   Gauss upwind;
+    div(phid,p)  Gauss vanAlbada01 limitedLinear 1;
+    div(phi,e)   Gauss vanAlbada01 limitedLinear 1;
 }
 \end{lstlisting}
 
-\textbf{Caso alto orden (linearUpwind):}
+\textbf{Caso alto orden (backward temporal):}
 \begin{lstlisting}[language=C++,basicstyle=\small\ttfamily]
 ddtSchemes
 {
-    default     Euler;  // Primer orden temporal
+    default     backward;  // Segundo orden temporal
 }
 divSchemes
 {
-    div(phi,U)   Gauss linearUpwind grad(U);
-    div(phid,p)  Gauss linearUpwind grad(p);
-    div(phi,e)   Gauss linearUpwind grad(e);
+    div(phi,U)   Gauss upwind;
+    div(phid,p)  Gauss vanAlbada01 limitedLinear 1;
+    div(phi,e)   Gauss vanAlbada01 limitedLinear 1;
 }
 \end{lstlisting}
 
-El esquema temporal es idéntico (Euler de primer orden) en ambos casos. La diferencia radica en los esquemas espaciales: el caso de bajo orden emplea \textit{upwind} (primer orden) para todos los términos convectivos, mientras que el caso de alto orden utiliza \textit{linearUpwind} (segundo orden) que aprovecha información de gradientes para mayor precisión.
+Los esquemas espaciales son idénticos en ambos casos: el esquema \textit{vanAlbada} (TVD limitador) de segundo orden se aplica a la presión y energía para capturar discontinuidades sin oscilaciones espurias, mientras que el esquema \textit{upwind} de primer orden se mantiene para la velocidad por estabilidad.
 
-Sin embargo, para una comparación más completa, se han configurado dos casos con esquemas temporales diferentes:
+La diferencia clave radica en los esquemas temporales:
 \begin{itemize}
-    \item \textbf{Caso de bajo orden:} Euler (temporal, primer orden) + upwind (espacial, primer orden)
-    \item \textbf{Caso de alto orden:} Crank-Nicolson (temporal, segundo orden) + linearUpwind (espacial, segundo orden)
+    \item \textbf{Caso de bajo orden:} Euler (temporal, primer orden, $O(\Delta t)$)
+    \item \textbf{Caso de alto orden:} backward (temporal, segundo orden, $O(\Delta t^2)$)
 \end{itemize}
 
 %========================================
@@ -408,11 +408,11 @@ La Fig.~\ref{fig:shock_validacion} presenta la comparación entre las soluciones
 \begin{figure}[h!]
     \centering
     \includegraphics[width=\textwidth]{Ejercicio4/shocktube_validacion.png}
-    \caption{Validación del problema de Sod: comparación de los perfiles de densidad, presión y velocidad entre los esquemas numéricos (Euler + upwind y Crank-Nicolson + linearUpwind) y la solución analítica escalada.}
+    \caption{Validación del problema de Sod: comparación de los perfiles de densidad, presión y velocidad entre los esquemas temporales de primer orden (Euler) y segundo orden (backward) frente a la solución analítica escalada.}
     \label{fig:shock_validacion}
 \end{figure}
 
-Se observa que ambos esquemas numéricos capturan correctamente la estructura de ondas características del problema de Sod: la onda de expansión propagándose hacia la izquierda, la discontinuidad de contacto en la región central, y la onda de choque avanzando hacia la derecha. Las diferencias entre esquemas temporales son sutiles a tiempos cortos, siendo el esquema espacial \textit{vanAlbada} el principal responsable de la captura de discontinuidades.
+Se observa que ambos esquemas numéricos capturan correctamente la estructura de ondas características del problema de Sod: la onda de expansión propagándose hacia la izquierda, la discontinuidad de contacto en la región central, y la onda de choque avanzando hacia la derecha. Aunque ambas simulaciones utilizan el mismo esquema espacial \textit{vanAlbada} para captura de discontinuidades, las diferencias en la precisión temporal se manifiestan principalmente en la posición exacta de las ondas, siendo más sutiles a tiempos cortos.
 
 %========================================
 \subsection{Resultados: Comparación de esquemas ($t^* = 0.15$)}
@@ -424,30 +424,30 @@ La Fig.~\ref{fig:shock_comparacion} presenta la comparación directa entre los e
 \begin{figure}[h!]
     \centering
     \includegraphics[width=\textwidth]{Ejercicio4/shocktube_comparacion.png}
-    \caption{Comparación de esquemas numéricos: perfiles horizontales de densidad, presión y velocidad para esquema de alto orden espacial (linearUpwind, línea azul discontinua) y bajo orden espacial (upwind, línea naranja punteada), junto con la solución analítica (línea negra continua).}
+    \caption{Comparación de esquemas numéricos: perfiles horizontales de densidad, presión y velocidad para esquema de segundo orden temporal (backward, línea azul discontinua) y primer orden temporal (Euler, línea naranja punteada), junto con la solución analítica (línea negra continua).}
     \label{fig:shock_comparacion}
 \end{figure}
 
 \subsubsection{Análisis comparativo detallado}
 
-\textbf{Efecto del orden de discretización espacial:}
+\textbf{Efecto del orden de discretización temporal:}
 
-La diferencia fundamental entre ambas configuraciones radica en la precisión de la discretización espacial:
+La diferencia fundamental entre ambas configuraciones radica en la precisión del avance temporal:
 
 \begin{itemize}
-    \item \textbf{Esquema upwind (bajo orden espacial):} Discretización de primer orden que introduce un error de truncación proporcional a $\Delta x$. Este error se manifiesta como difusión numérica excesiva, especialmente en regiones con gradientes pronunciados.
+    \item \textbf{Esquema Euler (primer orden temporal):} El método Euler es un esquema explícito de primer orden con error de truncación local $O(\Delta t)$. Introduce difusión temporal acumulativa que afecta la precisión de las velocidades de propagación de las ondas características.
 
-    \item \textbf{Esquema linearUpwind (alto orden espacial):} Discretización de segundo orden que utiliza información de gradientes para reconstruir los valores en las caras. Proporciona mayor precisión espacial sin generar oscilaciones no físicas.
+    \item \textbf{Esquema backward (segundo orden temporal):} El método backward (Crank-Nicolson modificado) es un esquema implícito de segundo orden con error de truncación local $O(\Delta t^2)$. Proporciona mejor fidelidad temporal, especialmente en problemas con propagación de discontinuidades.
 \end{itemize}
 
 \textbf{Comportamiento por región:}
 
 \begin{enumerate}
-    \item \textbf{Onda de expansión:} El esquema de alto orden espacial captura mejor la pendiente del abanico de expansión, mientras que el esquema upwind introduce mayor difusión numérica en esta región suave.
+    \item \textbf{Onda de expansión:} El esquema de segundo orden temporal captura con mayor precisión la velocidad de propagación de la cabeza de la expansión. El esquema Euler introduce una disipación temporal que retarda ligeramente el avance del abanico.
 
-    \item \textbf{Discontinuidad de contacto:} Las diferencias son notables, ya que el esquema linearUpwind preserva mejor la nitidez del salto de densidad comparado con el esquema upwind de primer orden.
+    \item \textbf{Discontinuidad de contacto:} Las diferencias temporales se manifiestan en la precisión de la posición de la discontinuidad de contacto. El esquema backward mantiene con mayor fidelidad la velocidad teórica de propagación, mientras que Euler tiende a suavizar la posición exacta.
 
-    \item \textbf{Onda de choque:} El frente de choque muestra mayor nitidez con el esquema linearUpwind. La difusión numérica es significativamente menor, permitiendo una mejor resolución del perfil de choque.
+    \item \textbf{Onda de choque:} El frente de choque muestra mayor precisión en su posición y velocidad de propagación con el esquema backward. El esquema Euler acumula error temporal que se refleja en una desviación progresiva de la posición teórica del choque.
 \end{enumerate}
 
 \subsubsection{Tabla resumen de esquemas}
@@ -462,14 +462,15 @@ La Tabla~\ref{tab:esquemas_resumen} resume las características de cada configur
 \hline
 \textbf{Característica} & \textbf{Bajo orden} & \textbf{Alto orden} \\
 \hline
-Esquema temporal & Euler & Crank-Nicolson \\
-Esquema convectivo (U) & Gauss upwind & Gauss linearUpwind grad(U) \\
-Esquema convectivo (p, e) & Gauss upwind & Gauss linearUpwind grad(p) \\
+Esquema temporal & Euler & backward \\
+Esquema convectivo (U) & Gauss upwind & Gauss upwind \\
+Esquema convectivo (p, e) & Gauss vanAlbada01 & Gauss vanAlbada01 \\
 Orden de precisión temporal & $O(\Delta t)$ & $O(\Delta t^2)$ \\
-Orden de precisión espacial & $O(\Delta x)$ & $O(\Delta x^2)$ \\
-Difusión numérica & Alta & Baja \\
-Captura de discontinuidades & Difusa (varias celdas) & Nitida (2-3 celdas) \\
-Coste computacional & Bajo & Medio (gradientes) \\
+Orden de precisión espacial & $O(\Delta x)$ & $O(\Delta x)$ \\
+Carácter temporal & Explícito & Implícito \\
+Estabilidad temporal & Condicional (CFL) & Mejorada \\
+Precision en propagación & Moderada & Elevada \\
+Coste computacional & Bajo & Medio (implícito) \\
 \hline
 \end{tabular}
 \end{table}
@@ -495,7 +496,7 @@ Las principales observaciones de la evolución temporal son:
     \item \textbf{Tiempo final:} Las ondas se aproximan a los extremos del dominio. La onda de expansión alcanza el límite izquierdo mientras que el choque continúa propagándose hacia el extremo derecho.
 \end{enumerate}
 
-La comparación visual entre los esquemas temporales de alto y bajo orden muestra diferencias sutiles en la posición exacta de las ondas. El esquema \textit{Crank-Nicolson} (segundo orden) preserva con mayor fidelidad la velocidad de propagación de las discontinuidades a lo largo de la simulación, mientras que el esquema \textit{Euler} (primer orden) introduce una ligera disipación adicional debido al error de truncación temporal acumulado.
+La comparación visual entre los esquemas temporales de alto y bajo orden muestra diferencias en la fidelidad de la propagación de ondas. El esquema \textit{backward} (segundo orden) preserva con mayor precisión la velocidad de propagación de las discontinuidades a lo largo de la simulación, mientras que el esquema \textit{Euler} (primer orden) introduce una disipación temporal acumulativa debido al error de truncación $O(\Delta t)$.
 
 La Fig.~\ref{fig:shock_evolucion} muestra la evolución temporal del campo de presión, ilustrando la propagación de las ondas características desde el diafragma inicial.
 
@@ -525,11 +526,11 @@ El análisis de los esquemas numéricos mediante la implementación FVM en MATLA
 
     \item La comparación con la solución analítica revela elevada difusión numérica en ambos esquemas, indicando que la resolución de malla es insuficiente para capturar las discontinuidades con total precisión.
 
-    \item La diferencia entre esquemas temporales (Euler vs Crank-Nicolson) afecta principalmente a la precisión en la posición de las ondas propagantes, siendo el esquema de segundo orden más fiel a las velocidades teóricas de propagación.
+    \item La diferencia entre esquemas temporales (Euler vs backward) afecta principalmente a la precisión en la posición y velocidad de propagación de las ondas, siendo el esquema de segundo orden (backward) más fiel a las velocidades teóricas características y acumula menos error temporal a lo largo de la simulación.
 
-    \item El esquema espacial \textit{vanAlbada} (TVD) empleado para presión y energía proporciona buena captura de discontinuidades sin oscilaciones espurias, mientras que \textit{upwind} para la velocidad garantiza estabilidad.
+    \item El esquema espacial \textit{vanAlbada} (TVD) empleado para presión y energía proporciona buena captura de discontinuidades sin oscilaciones espurias, mientras que \textit{upwind} para la velocidad garantiza estabilidad numérica.
 
-    \item Para aplicaciones con ondas de choque, se recomienda combinar esquemas espaciales TVD con esquemas temporales de segundo orden, junto con mallas suficientemente refinadas en las regiones de discontinuidad.
+    \item Para aplicaciones con ondas de choque, se recomienda combinar esquemas espaciales TVD de orden superior con esquemas temporales de segundo orden que minimicen la disipación temporal, junto con mallas suficientemente refinadas en las regiones de discontinuidad.
 \end{enumerate}
 
 % Fin del capítulo 4

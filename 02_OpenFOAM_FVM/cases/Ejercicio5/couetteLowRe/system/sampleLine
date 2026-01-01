@@ -1,0 +1,36 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+    Extrae el perfil de velocidad a lo largo de una linea vertical
+    usando muestreo en centros de celda (sin interpolacion).
+
+\*---------------------------------------------------------------------------*/
+
+type            sets;
+libs            (sampling);
+
+writeControl    writeTime;
+
+interpolationScheme cell;  // Sin interpolacion, usa valor de celda
+
+setFormat       raw;
+
+sets
+(
+    lineY
+    {
+        type    lineCell;  // Muestreo en centros de celda
+        axis    y;
+        start   (0.05 0 0.005);
+        end     (0.05 0.1 0.005);
+    }
+);
+
+fields          (U);
+
+// ************************************************************************* //

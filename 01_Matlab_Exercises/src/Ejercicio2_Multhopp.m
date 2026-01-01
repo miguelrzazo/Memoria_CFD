@@ -77,10 +77,10 @@ end
 
 %% CASOS A ANALIZAR
 % 1. Sin alerones
-% 2. Alerones extendidos (positivos)
-% 3. Alerones retraidos (negativos)
+% 2. Alerones deflectados para alabeo positivo (rodar a derecha)
+% 3. Alerones deflectados para alabeo negativo (rodar a izquierda)
 
-casos = {'Sin alerones', 'Alerones extendidos (+6 deg)', 'Alerones retraidos (-6 deg)'};
+casos = {'Sin alerones', 'Alerones alabeo positivo (+6 deg)', 'Alerones alabeo negativo (-6 deg)'};
 delta_cases = [0, delta_aileron, -delta_aileron];  % [grados]
 
 % Preasignacion de resultados
@@ -99,47 +99,63 @@ fprintf('Superficie alar: %.2f m^2\n\n', S);
 
 for caso = 1:length(casos)
     fprintf('=== %s ===\n', casos{caso});
-    
+
     % Deflexion de alerones segun el caso
+    % CORRECCION: Alerones ASIMETRICOS para generar momento de alabeo
     delta = zeros(1, N);
     delta_deg = delta_cases(caso);
-    
-    % Aplicar deflexion en el 10% exterior de cada semiala
+
+    % Aplicar deflexion ASIMETRICA en el 10% exterior de cada semiala
     if delta_deg ~= 0
         % Identificar estaciones donde aplican los alerones
         aileron_limit = (b/2) * (1 - aileron_span);
         for i = 1:N
             if abs(y(i)) >= aileron_limit
-                delta(i) = delta_deg * sign(y(i));  % Signo segun el lado del ala
+                % CLAVE: Deflexion ASIMETRICA
+                % Semiala DERECHA (y > 0): aplica -delta_deg (aileron arriba para rodar a derecha)
+                % Semiala IZQUIERDA (y < 0): aplica +delta_deg (aileron abajo para rodar a derecha)
+                % Para alabeo positivo: delta_deg > 0 → derecha arriba, izquierda abajo
+                % Para alabeo negativo: delta_deg < 0 → derecha abajo, izquierda arriba
+                if y(i) > 0
+                    % Semiala derecha: deflexion OPUESTA al signo de delta_deg
+                    delta(i) = -delta_deg;
+                else
+                    % Semiala izquierda: deflexion IGUAL al signo de delta_deg
+                    delta(i) = delta_deg;
+                end
             end
         end
     end
-    
+
     delta_rad = delta * pi/180;  % Conversion a radianes
-    
+
+    % Diagnostico: imprimir cuantas estaciones tienen alerones
+    num_alerones = sum(delta ~= 0);
+    fprintf('   Estaciones con alerones: %d de %d (%.1f%%)\n', num_alerones, N, 100*num_alerones/N);
+
     % Inicializacion de vectores de resultados
     CL = zeros(length(alpha_range), 1);
     CDi = zeros(length(alpha_range), 1);
     CMx = zeros(length(alpha_range), 1);
     CMz = zeros(length(alpha_range), 1);
-    
+
     for idx = 1:length(alpha_range)
         alpha = alpha_range(idx);
         alpha_rad = alpha * pi/180;
-        
+
         % Vector del lado derecho: alpha + delta + epsilon
         b_vec = alpha_rad + delta_rad' + epsilon_rad';
-        
+
         % Resolucion del sistema: A * Gamma = b
         Gamma = A \ b_vec;
-        
+
         % Coeficiente de sustentacion: CL = (2/S) * integral(Gamma dy)
         CL_temp = 0;
         for i = 1:N-1
             CL_temp = CL_temp + 0.5 * (Gamma(i) + Gamma(i+1)) * abs(y(i+1) - y(i));
         end
-        CL(idx) = (2 * CL_temp * 2) / S;  % Factor 2 por ambas semialas
-        
+        CL(idx) = (2 * CL_temp) / S;  % Integral sobre toda la envergadura
+
         % Coeficiente de resistencia inducida: CDi = (2/S) * integral(Gamma * w dy)
         CDi_temp = 0;
         for i = 1:N-1
@@ -149,33 +165,33 @@ for caso = 1:length(casos)
                 dGamma = Gamma(j+1) - Gamma(j);
                 w = w - (dGamma / (4*pi)) * (1 / (y(i) - (y(j) + y(j+1))/2 + 1e-10));
             end
-            
+
             CDi_temp = CDi_temp + Gamma(i) * w * abs(y(i+1) - y(i));
         end
-        CDi(idx) = (2 * CDi_temp * 2) / S;
-        
+        CDi(idx) = (2 * CDi_temp) / S;
+
         % Momento de alabeo: CMx = (2/(S*b)) * integral(Gamma * y dy)
         CMx_temp = 0;
         for i = 1:N-1
             CMx_temp = CMx_temp + 0.5 * (Gamma(i) * y(i) + Gamma(i+1) * y(i+1)) * abs(y(i+1) - y(i));
         end
-        CMx(idx) = (2 * CMx_temp * 2) / (S * b);
-        
+        CMx(idx) = (2 * CMx_temp) / (S * b);
+
         % Momento de guinada: CMz = -(2/(S*b)) * integral(Gamma * c * y dy)
         CMz_temp = 0;
         for i = 1:N-1
             CMz_temp = CMz_temp + 0.5 * (Gamma(i) * c(i) * y(i) + Gamma(i+1) * c(i+1) * y(i+1)) * abs(y(i+1) - y(i));
         end
-        CMz(idx) = -(2 * CMz_temp * 2) / (S * b);
+        CMz(idx) = -(2 * CMz_temp) / (S * b);
     end
-    
+
     % Almacenar resultados
     resultados.(sprintf('caso%d', caso)).nombre = casos{caso};
     resultados.(sprintf('caso%d', caso)).CL = CL;
     resultados.(sprintf('caso%d', caso)).CDi = CDi;
     resultados.(sprintf('caso%d', caso)).CMx = CMx;
     resultados.(sprintf('caso%d', caso)).CMz = CMz;
-    
+
     % Mostrar algunos resultados
     fprintf('alpha = 10 deg: CL = %.4f, CDi = %.5f, CMx = %.6f, CMz = %.6f\n\n', ...
         CL(11), CDi(11), CMx(11), CMz(11));
@@ -211,13 +227,14 @@ xlim([0 20]);
 subplot(1,3,3)
 hold on; grid on;
 for caso = 1:length(casos)
-    plot(alpha_range, resultados.(sprintf('caso%d', caso)).CMx, '-', 'LineWidth', 2);
+    plot(alpha_range, resultados.(sprintf('caso%d', caso)).CMx * 1000, '-', 'LineWidth', 2);
 end
 xlabel('$\alpha$ [deg]', 'Interpreter', 'latex', 'FontSize', 12);
-ylabel('$C_{Mx}$', 'Interpreter', 'latex', 'FontSize', 12);
+ylabel('$C_{Mx}$ [$\times 10^{-3}$]', 'Interpreter', 'latex', 'FontSize', 12);
 title('Momento de Alabeo', 'Interpreter', 'latex', 'FontSize', 13, 'FontWeight', 'bold');
 legend(casos, 'Location', 'best', 'Interpreter', 'latex', 'FontSize', 9);
 xlim([0 20]);
+yline(0, 'k--', 'LineWidth', 0.5);
 
 sgtitle('Metodo de Multhopp - Coeficientes Aerodinamicos', 'Interpreter', 'latex', 'FontSize', 16, 'FontWeight', 'bold');
 exportgraphics(fig1, fullfile(fig_dir, 'resumen_multhopp.png'), 'Resolution', 300);
@@ -270,6 +287,8 @@ title('$C_{Mx}$ vs $\alpha$ - Momento de Alabeo', 'Interpreter', 'latex', ...
       'FontSize', 14, 'FontWeight', 'bold');
 legend(casos, 'Location', 'best', 'Interpreter', 'latex', 'FontSize', 10);
 xlim([0 20]);
+% Agregar linea de referencia en y=0
+yline(0, 'k--', 'LineWidth', 1);
 exportgraphics(fig4, fullfile(fig_dir, 'CMx_vs_alpha.png'), 'Resolution', 300);
 fprintf('Guardada: %s\n', fullfile(fig_dir, 'CMx_vs_alpha.png'));
 
@@ -289,10 +308,48 @@ xlim([0 20]);
 exportgraphics(fig5, fullfile(fig_dir, 'CMz_vs_alpha.png'), 'Resolution', 300);
 fprintf('Guardada: %s\n', fullfile(fig_dir, 'CMz_vs_alpha.png'));
 
+% NUEVA GRAFICA: Delta CMx respecto al caso sin alerones
+fig6 = figure('Position', [100, 100, 800, 500]);
+hold on; grid on;
+% Calcular diferencias respecto al caso sin alerones
+delta_CMx_pos = resultados.caso2.CMx - resultados.caso1.CMx;
+delta_CMx_neg = resultados.caso3.CMx - resultados.caso1.CMx;
+plot(alpha_range, delta_CMx_pos * 1000, markers{2}, 'LineWidth', 2, 'MarkerSize', 5);
+plot(alpha_range, delta_CMx_neg * 1000, markers{3}, 'LineWidth', 2, 'MarkerSize', 5);
+xlabel('$\alpha$ [deg]', 'Interpreter', 'latex', 'FontSize', 12);
+ylabel('$\Delta C_{Mx}$ [$\times 10^{-3}$]', 'Interpreter', 'latex', 'FontSize', 12);
+title('Efecto de Alerones en el Momento de Alabeo', 'Interpreter', 'latex', ...
+      'FontSize', 14, 'FontWeight', 'bold');
+legend({'Alerones alabeo positivo (+6 deg)', 'Alerones alabeo negativo (-6 deg)'}, ...
+       'Location', 'best', 'Interpreter', 'latex', 'FontSize', 10);
+xlim([0 20]);
+yline(0, 'k--', 'LineWidth', 1);
+exportgraphics(fig6, fullfile(fig_dir, 'Delta_CMx_vs_alpha.png'), 'Resolution', 300);
+fprintf('Guardada: %s\n', fullfile(fig_dir, 'Delta_CMx_vs_alpha.png'));
+
+% NUEVA GRAFICA: Delta CMz respecto al caso sin alerones
+fig7 = figure('Position', [100, 100, 800, 500]);
+hold on; grid on;
+% Calcular diferencias respecto al caso sin alerones
+delta_CMz_pos = resultados.caso2.CMz - resultados.caso1.CMz;
+delta_CMz_neg = resultados.caso3.CMz - resultados.caso1.CMz;
+plot(alpha_range, delta_CMz_pos * 1e6, markers{2}, 'LineWidth', 2, 'MarkerSize', 5);
+plot(alpha_range, delta_CMz_neg * 1e6, markers{3}, 'LineWidth', 2, 'MarkerSize', 5);
+xlabel('$\alpha$ [deg]', 'Interpreter', 'latex', 'FontSize', 12);
+ylabel('$\Delta C_{Mz}$ [$\times 10^{-6}$]', 'Interpreter', 'latex', 'FontSize', 12);
+title('Efecto de Alerones en el Momento de Gui\~nada (Efecto Adverso)', 'Interpreter', 'latex', ...
+      'FontSize', 14, 'FontWeight', 'bold');
+legend({'Alerones alabeo positivo (+6 deg)', 'Alerones alabeo negativo (-6 deg)'}, ...
+       'Location', 'best', 'Interpreter', 'latex', 'FontSize', 10);
+xlim([0 20]);
+yline(0, 'k--', 'LineWidth', 1);
+exportgraphics(fig7, fullfile(fig_dir, 'Delta_CMz_vs_alpha.png'), 'Resolution', 300);
+fprintf('Guardada: %s\n', fullfile(fig_dir, 'Delta_CMz_vs_alpha.png'));
+
 %% GRAFICAS INDIVIDUALES PARA CADA CASO
 for caso = 1:length(casos)
     fig_caso = figure('Position', [100 + 50*caso, 100 + 50*caso, 1000, 800]);
-    
+
     % CL vs alpha
     subplot(2,2,1)
     plot(alpha_range, resultados.(sprintf('caso%d', caso)).CL, 'b-o', 'LineWidth', 2, 'MarkerSize', 5);
@@ -302,7 +359,7 @@ for caso = 1:length(casos)
     title(sprintf('$C_L$ vs $\\alpha$ - %s', casos{caso}), 'Interpreter', 'latex', ...
           'FontSize', 12, 'FontWeight', 'bold');
     xlim([0 20]);
-    
+
     % CDi vs alpha
     subplot(2,2,2)
     plot(alpha_range, resultados.(sprintf('caso%d', caso)).CDi, 'r-s', 'LineWidth', 2, 'MarkerSize', 5);
@@ -312,7 +369,7 @@ for caso = 1:length(casos)
     title(sprintf('$C_{Di}$ vs $\\alpha$ - %s', casos{caso}), 'Interpreter', 'latex', ...
           'FontSize', 12, 'FontWeight', 'bold');
     xlim([0 20]);
-    
+
     % CMx vs alpha
     subplot(2,2,3)
     plot(alpha_range, resultados.(sprintf('caso%d', caso)).CMx, 'g-d', 'LineWidth', 2, 'MarkerSize', 5);
@@ -322,7 +379,8 @@ for caso = 1:length(casos)
     title(sprintf('$C_{Mx}$ vs $\\alpha$ - %s', casos{caso}), 'Interpreter', 'latex', ...
           'FontSize', 12, 'FontWeight', 'bold');
     xlim([0 20]);
-    
+    yline(0, 'k--', 'LineWidth', 1);
+
     % CMz vs alpha
     subplot(2,2,4)
     plot(alpha_range, resultados.(sprintf('caso%d', caso)).CMz, 'm-^', 'LineWidth', 2, 'MarkerSize', 5);
@@ -332,9 +390,9 @@ for caso = 1:length(casos)
     title(sprintf('$C_{Mz}$ vs $\\alpha$ - %s', casos{caso}), 'Interpreter', 'latex', ...
           'FontSize', 12, 'FontWeight', 'bold');
     xlim([0 20]);
-    
+
     sgtitle(sprintf('Resultados - %s', casos{caso}), 'FontSize', 14, 'FontWeight', 'bold');
-    
+
     % Guardar figura de cada caso
     filename = sprintf('caso%d_%s.png', caso, strrep(lower(casos{caso}), ' ', '_'));
     filename = strrep(filename, '(', '');

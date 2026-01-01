@@ -129,7 +129,7 @@ fprintf('  Error relativo = %.1f%%\n\n', abs(St - St_exp)/St_exp * 100);
 
 %% GRAFICAS
 
-% 1. Cd vs tiempo
+% 1. Cd vs tiempo (version simple - compatible con versiones antiguas del LaTeX)
 fig1 = figure('Position', [100, 100, 900, 500]);
 plot(t, Cd, 'b-', 'LineWidth', 1);
 hold on;
@@ -145,6 +145,43 @@ grid on;
 xlim([0 max(t)]);
 exportgraphics(fig1, fullfile(fig_dir, 'Cd_vs_tiempo.png'), 'Resolution', 300);
 fprintf('Guardada: %s\n', fullfile(fig_dir, 'Cd_vs_tiempo.png'));
+
+% 1b. Cd vs tiempo con zoom lateral (para usar en LaTeX con subfiguras)
+fig1b = figure('Position', [100, 100, 1400, 500]);
+
+% Panel izquierdo: Serie temporal completa
+subplot(1,2,1);
+plot(t, Cd, 'b-', 'LineWidth', 1);
+hold on;
+yline(mean(Cd_steady), 'r--', 'LineWidth', 1.5);
+yline(Cd_exp, 'g--', 'LineWidth', 1.5);
+xlabel('$t$ [s]', 'FontSize', 12, 'Interpreter', 'latex');
+ylabel('$C_d$', 'FontSize', 12, 'Interpreter', 'latex');
+title('Serie temporal completa', 'Interpreter', 'latex', 'FontSize', 13);
+legend('$C_d(t)$', sprintf('$\\bar{C}_d$ = %.3f', mean(Cd_steady)), ...
+       sprintf('$C_d$ exp = %.2f', Cd_exp), ...
+       'Location', 'northeast', 'FontSize', 9, 'Interpreter', 'latex');
+grid on;
+xlim([0 max(t)]);
+
+% Panel derecho: Zoom de los ultimos 5 segundos
+subplot(1,2,2);
+t_zoom_start = max(t) - 5;
+idx_zoom = t >= t_zoom_start;
+plot(t(idx_zoom), Cd(idx_zoom), 'b-', 'LineWidth', 1.5);
+hold on;
+yline(mean(Cd_steady), 'r--', 'LineWidth', 1.5, 'DisplayName', sprintf('$\\bar{C}_d$ = %.3f', mean(Cd_steady)));
+yline(Cd_exp, 'g--', 'LineWidth', 1.5, 'DisplayName', sprintf('$C_d$ exp = %.2f', Cd_exp));
+xlabel('$t$ [s]', 'FontSize', 12, 'Interpreter', 'latex');
+ylabel('$C_d$', 'FontSize', 12, 'Interpreter', 'latex');
+title('Detalle (\''ultimos 5 s)', 'Interpreter', 'latex', 'FontSize', 13);
+legend('Location', 'northeast', 'FontSize', 9, 'Interpreter', 'latex');
+grid on;
+xlim([t_zoom_start max(t)]);
+
+sgtitle(sprintf('Coeficiente de Arrastre - Re = %d', Re), 'Interpreter', 'latex', 'FontSize', 15, 'FontWeight', 'bold');
+exportgraphics(fig1b, fullfile(fig_dir, 'Cd_vs_tiempo_con_zoom.png'), 'Resolution', 300);
+fprintf('Guardada: %s\n', fullfile(fig_dir, 'Cd_vs_tiempo_con_zoom.png'));
 
 % 2. Cl vs tiempo
 fig2 = figure('Position', [100, 100, 900, 500]);

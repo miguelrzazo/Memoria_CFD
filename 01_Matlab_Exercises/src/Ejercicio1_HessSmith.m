@@ -128,9 +128,9 @@ for idx_alpha = 1:n_alpha
         x_ctrl = x_medio(i);
         z_ctrl = z_medio(i);
         
-        % Normal al panel i
-        n_x = -sin(theta(i));
-        n_z = cos(theta(i));
+        % Normal al panel i que apunta HACIA FUERA (perfil con recorrido horario)
+        n_x = sin(theta(i));
+        n_z = -cos(theta(i));
         
         % Recorrer paneles j (fuentes de influencia)
         for j = 1:N_paneles
@@ -232,30 +232,67 @@ for idx_alpha = 1:n_alpha
     Cp = 1 - (V_tang / U_inf).^2;
     Cp_matrix(:, idx_alpha) = Cp;
     
-    %% 4.5. CALCULO DEL COEFICIENTE DE SUSTENTACION
-    % Usando el teorema de Kutta-Joukowski: L = rho * U_inf * Gamma
-    % CL = L / (0.5 * rho * U_inf^2 * c) = 2 * Gamma / (U_inf * c)
+    %% 4.5. CALCULO DEL COEFICIENTE DE SUSTENTACION Y MOMENTO
+    % Integracion de presiones sobre el perfil
     c = 1.0;  % Cuerda unitaria (normalizada)
-    CL = 2 * gamma / (U_inf * c);
-    CL_array(idx_alpha) = CL;
     
-    %% 4.6. CALCULO DEL COEFICIENTE DE MOMENTO
-    % Momento respecto al origen (borde de ataque)
-    M_O = 0;
+    % Vector normal hacia afuera del perfil
+    % El perfil se recorre en sentido ANTIHORARIO (TE(ext)->LE->TE(int))
+    % La normal hacia afuera se obtiene rotando la tangente -90 grados (horario)
+    % Tangente: (cos(theta), sin(theta))
+    % Normal hacia fuera para antihorario: (sin(theta), -cos(theta))
+    n_x = sin(theta);
+    n_z = -cos(theta);
+    
+    % Fuerzas de presion en ejes cuerpo (x,z)
+    % La fuerza de presion es F = -p * n * dA (opuesta a la normal)
+    % En forma de coeficiente: dC_F = -Cp * n * dL/c
+    Fx = 0;  % Fuerza en direccion x (positivo hacia atras)
+    Fz = 0;  % Fuerza en direccion z (positivo hacia arriba)
+    CM_LE = 0;  % Momento respecto al borde de ataque
+    
     for i = 1:N_paneles
-        % Fuerza normal al panel
-        dL = -Cp(i) * longitud_panel(i);
+        % Contribucion del panel i a las fuerzas (adimensionales)
+        dFx = -Cp(i) * n_x(i) * longitud_panel(i) / c;
+        dFz = -Cp(i) * n_z(i) * longitud_panel(i) / c;
         
-        % Momento respecto al origen
-        M_O = M_O + dL * x_medio(i);
+        Fx = Fx + dFx;
+        Fz = Fz + dFz;
+        
+        % Momento respecto al borde de ataque (en x=0)
+        % M = r x F, para 2D con eje Y hacia afuera: M_y = x*Fz - z*Fx
+        % Pero en convencion aeronautica: positivo = nariz arriba
+        % Esto corresponde a eje Y hacia DENTRO (sentido horario positivo)
+        % Por tanto: M_aero = z*Fx - x*Fz
+        dM = (z_medio(i) * dFx - x_medio(i) * dFz) / c;
+        CM_LE = CM_LE + dM;
     end
     
-    CM = M_O / c;
-    CM_array(idx_alpha) = CM;
+    % Coeficientes en ejes cuerpo
+    CN = Fz;   % Coeficiente de fuerza normal
+    CA = Fx;   % Coeficiente de fuerza axial
     
-    % Momento respecto al cuarto de cuerda (c/4 = 0.25)
-    x_c4 = 0.25 * c;
-    CM_c4 = CM - CL * x_c4;
+    % Momento respecto al cuarto de cuerda
+    % Trasladar referencia: CM_c4 = CM_LE - (c/4) * CN
+    CM_c4 = CM_LE - 0.25 * CN;
+    
+    % Calculo del coeficiente de sustentacion usando Kutta-Joukowski
+    % En el metodo Hess-Smith, la circulacion gamma es por unidad de longitud
+    % CL = 2 * Gamma_total / (U_inf * c)
+    % El signo negativo corrige la convencion del torbellino
+    % (gamma negativo = circulacion horaria = sustentacion positiva en este codigo)
+    Gamma_total = gamma * sum(longitud_panel);
+    CL_KJ = -2 * Gamma_total / (U_inf * c);  % Signo negativo por convencion
+    
+    % Usar CL de Kutta-Joukowski (mas preciso para variacion con alpha)
+    CL = CL_KJ;
+    
+    % Calcular CD por integracion de presiones (correcto para metodo de paneles)
+    CD = CN * sin(alpha) + CA * cos(alpha);
+    
+    % Guardar resultados
+    CL_array(idx_alpha) = CL;
+    CM_array(idx_alpha) = CM_LE;
     CM_c4_array(idx_alpha) = CM_c4;
 end
 
@@ -451,8 +488,8 @@ function [u, w] = influencia_torbellino(x, z, x1, z1, x2, z2)
     theta1 = atan2(z_local, x_local);
     theta2 = atan2(z_local, x_local - L);
     
-    u_local = -(theta2 - theta1) / (2 * pi);
-    w_local = (log(r2 / r1)) / (2 * pi);
+    u_local = (theta2 - theta1) / (2 * pi);       % Sin negativo (corregido)
+    w_local = -(log(r2 / r1)) / (2 * pi);         % Con negativo (corregido)
     
     % Transformacion al sistema global
     u = u_local * cos_theta - w_local * sin_theta;
